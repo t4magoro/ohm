@@ -53,7 +53,7 @@ export default function Home() {
   if (!ohm.pet || !ohm.weather || !ohm.brain || !ohm.now) {
     return (
       <main className="grid flex-1 place-items-center p-6 font-mono">
-        <p>{ohm.connected ? "Waking Ohm up…" : "Connecting to Ohm…"}</p>
+      <p>{ohm.banned ? "⛔ You've been banned from Ohm." : ohm.connected ? "Waking Ohm up…" : "Connecting to Ohm…"}</p>
       </main>
     );
   }
@@ -67,7 +67,7 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 font-mono">
       <header className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold">Ohm</h1>
-        <p className="text-sm">{ohm.connected ? `🟢 ${ohm.online} online` : "🔴 Reconnecting…"}</p>
+        <p className="text-sm">{ohm.banned ? "⛔ Banned" : ohm.connected ? `🟢 ${ohm.online} online` : "🔴 Reconnecting…"}</p>
       </header>
 
       <section className={`grid place-items-center rounded-lg p-6 ${sceneColor(weather)}`}>

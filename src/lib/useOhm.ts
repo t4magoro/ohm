@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { Brain, ClientMsg, FeedEvent, Line, Pet, ServerMsg, Weather } from "./protocol";
+import { BANNED, type Brain, type ClientMsg, type FeedEvent, type Line, type Pet, type ServerMsg, type Weather } from "./protocol";
 
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/^http/, "ws")}/ws`;
 const FEED_SIZE = 30;
@@ -39,6 +39,7 @@ export function useOhm() {
   const [feed, setFeed] = useState<FeedEvent[]>([]);
   const [chat, setChat] = useState<ChatItem[]>([]);
   const [connected, setConnected] = useState(false);
+  const [banned, setBanned] = useState(false);
   const [toast, setToast] = useState<{ text: string; bad: boolean } | null>(null);
   const [name, setName] = useState("");
   const [deviceNow, setDeviceNow] = useState(0);
@@ -74,12 +75,14 @@ export function useOhm() {
         else if (msg.t === "event") setFeed((f) => [msg.e, ...f].slice(0, FEED_SIZE));
         else if (msg.t === "lines") setChat(msg.lines.map(ohmSaid));
         else if (msg.t === "line") setChat((c) => [...c, ohmSaid(msg.line)].slice(-CHAT_SIZE));
+        else if (msg.t === "unsay") setChat((c) => c.filter((item) => item.lineId !== msg.id));
         else if (msg.t === "notice") setToast({ text: msg.msg, bad: false });
         else if (msg.t === "error") setToast({ text: msg.msg, bad: true });
       };
-      socket.onclose = () => {
+      socket.onclose = (ev) => {
         if (stopped) return;
         setConnected(false);
+        if (ev.code === BANNED) return setBanned(true); // the server refuses a banned visitor, so don't retry
         timer = setTimeout(connect, Math.min(30_000, 1_000 * 2 ** retry++));
       };
     };
@@ -146,6 +149,7 @@ export function useOhm() {
     feed,
     chat,
     connected,
+    banned,
     toast,
     name,
     /** Server time, updated every second. 0 until the first tick. */
