@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ClientMsg, FeedEvent, Pet, ServerMsg } from "./protocol";
+import type { ClientMsg, FeedEvent, Pet, ServerMsg, Weather } from "./protocol";
 
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/^http/, "ws")}/ws`;
 const FEED_SIZE = 30;
@@ -27,6 +27,7 @@ const guestName = () => `Guest-${Math.floor(1000 + Math.random() * 9000)}`;
 /** The live connection to Ohm. Everything browser-only happens inside effects and callbacks. */
 export function useOhm() {
   const [pet, setPet] = useState<Pet | null>(null);
+  const [weather, setWeather] = useState<Weather | null>(null);
   const [online, setOnline] = useState(0);
   const [feed, setFeed] = useState<FeedEvent[]>([]);
   const [connected, setConnected] = useState(false);
@@ -57,6 +58,7 @@ export function useOhm() {
         const msg = JSON.parse(ev.data as string) as ServerMsg;
         if (msg.t === "state") {
           setPet(msg.pet);
+          setWeather(msg.weather);
           setOffset(msg.now - Date.now());
         } else if (msg.t === "online") setOnline(msg.online);
         else if (msg.t === "feed") setFeed(msg.events);
@@ -116,6 +118,7 @@ export function useOhm() {
 
   return {
     pet,
+    weather,
     online,
     feed,
     connected,

@@ -6,10 +6,19 @@ const FACES = {
   happy: ["kgkkkkgk", "gkgkkgkg", "kkgkkgkk", "pkkggkkp"],
   okay: ["kggkkggk", "kggkkggk", "kkkkkkkk", "kkggggkk"],
   sad: ["kkkkkkkk", "kggkkggk", "kkkggkkk", "kkgkkgkk"],
+  sleep: ["kkkkkkkk", "kkkkkkkk", "gggkkggg", "kkkkkkkk"],
   off: ["kkkkkkkk", "kcckkcck", "kkkkkkkk", "kkkkkkkk"],
 };
 
 export type Face = keyof typeof FACES;
+
+const TITLES: Record<Face, string> = {
+  happy: "Ohm looks happy",
+  okay: "Ohm looks okay",
+  sad: "Ohm looks sad",
+  sleep: "Ohm is asleep",
+  off: "Ohm is powered off",
+};
 
 function sprite(face: Face) {
   const rows = [
@@ -32,11 +41,5 @@ function sprite(face: Face) {
 }
 
 export function OhmSprite({ face }: { face: Face }) {
-  return (
-    <PixelArt
-      art={sprite(face)}
-      title={face === "off" ? "Ohm is powered off" : `Ohm looks ${face}`}
-      className="w-48 sm:w-64"
-    />
-  );
+  return <PixelArt art={sprite(face)} title={TITLES[face]} className="w-48 sm:w-64" />;
 }
