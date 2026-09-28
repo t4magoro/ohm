@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { Chat } from "@/components/Chat";
 import { Feed } from "@/components/Feed";
 import { OhmSprite, type Face } from "@/components/OhmSprite";
+import { Spellbook } from "@/components/Spellbook";
 import { StatBar } from "@/components/StatBar";
 import { cleanName, valueNow, type Pet, type Weather } from "@/lib/protocol";
 import { useOhm } from "@/lib/useOhm";
@@ -28,11 +30,10 @@ function faceOf(pet: Pet, weather: Weather, now: number, pokedAt: number): Face 
 /** What Bandung's weather is doing to Ohm right now, in words. */
 function weatherNotes(w: Weather) {
   const notes = [`${Math.round(w.tempC)}°C`];
-  if (!w.isDay) notes.push("🌙 night: Ohm sleeps, everything drains at half speed");
+  if (!w.isDay) notes.push("🌙 night: Ohm sleeps (poke it to wake it up), everything drains at half speed");
   if (w.tempC > 30) notes.push("🥵 hot: the battery drains faster");
   if (w.raining) notes.push("🌧 rain: Ohm's mood drains faster");
   if (notes.length === 1) notes.push("☀️ a calm day");
-  if (!w.isDay) notes.push("🌙 night: Ohm sleeps (poke it to wake it up), everything drains at half speed");
   return notes.join(" · ");
 }
 
@@ -49,10 +50,10 @@ export default function Home() {
   useShake(() => !off && ohm.play(), !shakeNeedsPermission() || shakeAllowed);
 
   // The build pre-renders this page with no connection, so the first screen is always this one.
-  if (!ohm.pet || !ohm.weather || !ohm.now) {
+  if (!ohm.pet || !ohm.weather || !ohm.brain || !ohm.now) {
     return (
       <main className="grid flex-1 place-items-center p-6 font-mono">
-        <p>{ohm.connected ? "Waking Ohm up…" : "Connecting to Ohm…"}</p>
+      <p>{ohm.banned ? "⛔ You've been banned from Ohm." : ohm.connected ? "Waking Ohm up…" : "Connecting to Ohm…"}</p>
       </main>
     );
   }
@@ -60,16 +61,17 @@ export default function Home() {
   const { pet, weather, now } = ohm;
   const alive = off ? 0 : now - pet.bornAt;
   const draftOk = draft !== null && cleanName(draft) !== null;
+  const pokedAt = ohm.feed.find((e) => e.type === "charge" || e.type === "play")?.at ?? 0;
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 font-mono">
       <header className="flex items-baseline justify-between">
         <h1 className="text-2xl font-bold">Ohm</h1>
-        <p className="text-sm">{ohm.connected ? `🟢 ${ohm.online} online` : "🔴 Reconnecting…"}</p>
+        <p className="text-sm">{ohm.banned ? "⛔ Banned" : ohm.connected ? `🟢 ${ohm.online} online` : "🔴 Reconnecting…"}</p>
       </header>
 
       <section className={`grid place-items-center rounded-lg p-6 ${sceneColor(weather)}`}>
-        <OhmSprite face={faceOf(pet, weather, now, ohm.feed.find((e) => e.type === "charge" || e.type === "play")?.at ?? 0)} />
+        <OhmSprite face={faceOf(pet, weather, now, pokedAt)} />
       </section>
       <p className="text-sm">Bandung now: {weatherNotes(weather)}</p>
 
@@ -100,9 +102,9 @@ export default function Home() {
           </>
         )}
       </section>
-      {ohm.error && (
-        <p role="alert" className="text-sm text-red-600">
-          {ohm.error}
+      {ohm.toast && (
+        <p role="status" className={`text-sm ${ohm.toast.bad ? "text-red-600" : "text-green-600"}`}>
+          {ohm.toast.text}
         </p>
       )}
       {canShake() && (
@@ -131,7 +133,7 @@ export default function Home() {
         }}
       >
         <label htmlFor="name" className="block">
-          Your name in the feed
+          Your name
         </label>
         <div className="flex gap-2">
           <input
@@ -148,16 +150,32 @@ export default function Home() {
         {draft !== null && !draftOk && <p className="text-red-600">2–16 letters, numbers, spaces, - or _</p>}
       </form>
 
+      <Chat items={ohm.chat} disabled={off} onSay={ohm.say} onReport={ohm.report} />
+      <Spellbook brain={ohm.brain} />
+
       <section>
         <h2 className="mb-2 font-bold">Live feed</h2>
         <Feed events={ohm.feed} />
       </section>
 
-      <footer className="mt-auto text-xs opacity-70">
-        Weather data by{" "}
-        <a href="https://open-meteo.com/" className="underline">
-          Open-Meteo.com
-        </a>
+      <footer className="mt-auto space-y-1 text-xs opacity-70">
+        <p>
+          Weather data by{" "}
+          <a href="https://open-meteo.com/" className="underline">
+            Open-Meteo.com
+          </a>
+        </p>
+        <p>
+          Word lists:{" "}
+          <a href="https://github.com/hermitdave/FrequencyWords" className="underline">
+            FrequencyWords
+          </a>{" "}
+          (MIT) and{" "}
+          <a href="https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words" className="underline">
+            LDNOOBW
+          </a>{" "}
+          (CC BY 4.0)
+        </p>
       </footer>
     </main>
   );
