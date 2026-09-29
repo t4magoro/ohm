@@ -54,6 +54,14 @@
   --animate-rise: rise 200ms var(--ease-out); /* new messages */
   --animate-fade: fade 200ms ease; /* the same, with reduced motion: no movement, only a fade */
   --animate-blink: blink 1s steps(1, end) infinite;
+  --animate-float: float 900ms steps(6, end) both; /* "ZAP!" rising out of Ohm when someone pokes it */
+
+  /* The sky behind the page (Backdrop.tsx). Slow and far away, so it never competes with Ohm. */
+  --animate-drift: drift 90s linear infinite; /* each cloud sets its own speed */
+  --animate-twinkle: blink 1.6s steps(1, end) infinite;
+  --animate-shoot: shoot 11s linear infinite; /* a shooting star, then a long wait */
+  --animate-fly: fly 32s linear infinite; /* birds cross in 12 s, then 20 s of empty sky */
+  --animate-flap: blink 0.4s steps(1, end) infinite;
 
   @keyframes bob {
     50% {
@@ -87,6 +95,51 @@
       opacity: 0;
     }
   }
+  @keyframes float {
+    from {
+      opacity: 0;
+      transform: translateY(40%);
+    }
+    20% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-160%);
+    }
+  }
+  /* From just off the left edge (its own width) to past the right edge. */
+  @keyframes drift {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100vw);
+    }
+  }
+  @keyframes shoot {
+    from {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+    7%,
+    to {
+      opacity: 0;
+      transform: translate(-40vw, 22vh);
+    }
+  }
+  @keyframes fly {
+    from {
+      transform: translate(-10vw, 0);
+    }
+    20% {
+      transform: translate(20vw, 2vh);
+    }
+    37.5%,
+    to {
+      transform: translate(110vw, -1vh);
+    }
+  }
 }
 
 body {
@@ -95,6 +148,12 @@ body {
   transition: background-color 1s ease; /* day to night eases instead of flashing */
   font-size: 1.125rem;
   line-height: 1.3;
+}
+
+/* Scrollbars in the page's colors, thin and without arrows. */
+html {
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
 }
 
 ::selection {
@@ -118,12 +177,16 @@ body {
   }
 
   /* The title: white pixel outline and a pink drop shadow, like the portfolio's name. */
+  /* Sizes in em, so small text gets a thin outline. Set --drop to change the shadow's color. */
   .title-outline {
+    --o: clamp(1px, 0.05em, 2px);
+    --n: calc(-1 * var(--o));
+    --d: clamp(2px, 0.1em, 5px);
     color: var(--color-ink);
     text-shadow:
-      2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff,
-      2px 2px #fff, -2px -2px #fff, 2px -2px #fff, -2px 2px #fff,
-      5px 5px var(--color-pink);
+      var(--o) 0 #fff, var(--n) 0 #fff, 0 var(--o) #fff, 0 var(--n) #fff,
+      var(--o) var(--o) #fff, var(--n) var(--n) #fff, var(--o) var(--n) #fff, var(--n) var(--o) #fff,
+      var(--d) var(--d) var(--drop, var(--color-pink));
   }
 
   /* The portfolio's notched pixel button with a stepped shadow. Sinks the moment it's pressed. */
@@ -202,6 +265,10 @@ body {
     caret-color: var(--color-pink);
     caret-shape: block; /* a block cursor where the browser supports it */
   }
+  /* The terminal's pink border already shows where you're typing. */
+  .term-input:focus-visible {
+    outline: none;
+  }
   .term-input::placeholder {
     color: var(--color-dim);
   }
@@ -224,6 +291,18 @@ body {
   }
   .term-btn:disabled {
     opacity: 0.4;
+  }
+
+  /* A scroll area with no scrollbar. It scrolls with a finger, the wheel or the keyboard as usual. */
+  .scroll-quiet {
+    scrollbar-width: none;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    display: none;
+  }
+  /* Lines fade out at the top edge, which says "there's more above" better than a scrollbar. */
+  .fade-top {
+    mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
   }
 }
 

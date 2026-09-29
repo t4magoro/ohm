@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BarChart, evenCeil, StepChart } from "@/components/Charts";
 import { PALETTE } from "@/components/pixel/palette";
+import { CardSkeleton } from "@/components/Skeleton";
 import { Spellbook } from "@/components/Spellbook";
 import { MILESTONES, type MilestoneProgress, type Vitals } from "@/lib/protocol";
 
@@ -83,19 +84,22 @@ export default function VitalsPage() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-5">
-      <header className="flex items-center justify-between">
+    // One column on phones, two on desktop: each chart is its own card, so they tile.
+    <main className="mx-auto grid w-full max-w-6xl flex-1 content-start items-start gap-6 px-4 py-6 lg:grid-cols-2">
+      <header className="flex items-center justify-between lg:col-span-2">
         <h1 className="title-outline font-pixel text-2xl font-bold leading-none">Ohm&apos;s vitals</h1>
         <Link href="/" className="btn">
           back to Ohm
         </Link>
       </header>
 
-      {!data ? (
-        <p className="text-xl">
-          <span className="text-mint">ohm&gt;</span>{" "}
-          {failed ? "Couldn't reach Ohm. Try again in a moment." : "reading Ohm's vitals..."}
+      {failed ? (
+        <p role="status" className="text-xl text-danger lg:col-span-2">
+          <span className="text-mint">ohm&gt;</span> Couldn&apos;t reach Ohm. Try again in a moment.
         </p>
+      ) : !data ? (
+        // Placeholders in the shape of the cards to come, so the page doesn't jump when they arrive.
+        [0, 1, 2, 3].map((i) => <CardSkeleton key={i} />)
       ) : (
         <>
           <section className="card space-y-4 p-3">
@@ -108,7 +112,7 @@ export default function VitalsPage() {
           <Spellbook brain={data.brain} />
 
           {data.snapshots.length === 0 ? (
-            <p className="text-dim">No hourly readings yet: Ohm writes one down every hour.</p>
+            <p className="card p-3 text-dim">No hourly readings yet: Ohm writes one down every hour.</p>
           ) : (
             <>
               <StepChart
@@ -151,12 +155,12 @@ export default function VitalsPage() {
             <BarChart title="Words Ohm knows (last 14 days with new words)" bars={known(data.growth).slice(-14)} fmt={whole} />
           )}
 
-          <section className="space-y-2">
+          <section className="card space-y-2 p-3">
             <h2 className="font-pixel text-sm font-bold">Top words</h2>
             {data.topWords.length === 0 ? (
               <p className="text-dim">Ohm hasn&apos;t learned any words yet.</p>
             ) : (
-              <table className="term w-full">
+              <table className="w-full">
                 <thead className="text-left text-dim">
                   <tr>
                     <th className="font-normal">Word</th>
