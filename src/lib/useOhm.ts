@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { BANNED, type Brain, type ClientMsg, type FeedEvent, type Line, type Pet, type ServerMsg, type Weather } from "./protocol";
+import {
+  BANNED,
+  type Brain,
+  type ClientMsg,
+  type FeedEvent,
+  type Line,
+  type MilestoneId,
+  type Pet,
+  type ServerMsg,
+  type Weather,
+} from "./protocol";
 
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/^http/, "ws")}/ws`;
 const FEED_SIZE = 30;
@@ -9,6 +19,9 @@ const CHAT_SIZE = 30;
 
 /** One line in the chat box: yours (only you see it) or Ohm's (everyone sees it). */
 export type ChatItem = { key: string; from: "you" | "ohm"; text: string; to?: string; lineId?: number };
+
+/** "While you were away": what happened since your last visit. */
+export type Away = Extract<ServerMsg, { t: "away" }>;
 
 const ohmSaid = (l: Line): ChatItem => ({ key: `ohm-${l.id}`, from: "ohm", text: l.text, to: l.to, lineId: l.id });
 
@@ -35,6 +48,8 @@ export function useOhm() {
   const [pet, setPet] = useState<Pet | null>(null);
   const [weather, setWeather] = useState<Weather | null>(null);
   const [brain, setBrain] = useState<Brain | null>(null);
+  const [unlocked, setUnlocked] = useState<MilestoneId[]>([]);
+  const [away, setAway] = useState<Away | null>(null);
   const [online, setOnline] = useState(0);
   const [feed, setFeed] = useState<FeedEvent[]>([]);
   const [chat, setChat] = useState<ChatItem[]>([]);
@@ -50,6 +65,12 @@ export function useOhm() {
   // Connect, and reconnect after a drop: 1 s, 2 s, 4 s … up to 30 s. Every deploy drops all connections.
   useEffect(() => {
     me.current = { id: remembered("ohm-id", randomId), name: remembered("ohm-name", guestName) };
+    let lastSeen = 0; // your last visit: sent with the first hello only, so reconnects don't repeat the summary
+    try {
+      lastSeen = Number(localStorage.getItem("ohm-last-seen")) || 0;
+    } catch {
+      // storage blocked: no "while you were away"
+    }
     let retry = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
@@ -61,7 +82,8 @@ export function useOhm() {
         retry = 0;
         setConnected(true);
         setName(me.current.name);
-        socket.send(JSON.stringify({ t: "hello", ...me.current } satisfies ClientMsg));
+        socket.send(JSON.stringify({ t: "hello", ...me.current, ...(lastSeen ? { lastSeen } : {}) } satisfies ClientMsg));
+        lastSeen = 0;
       };
       socket.onmessage = (ev) => {
         const msg = JSON.parse(ev.data as string) as ServerMsg;
@@ -69,8 +91,10 @@ export function useOhm() {
           setPet(msg.pet);
           setWeather(msg.weather);
           setBrain(msg.brain);
+          setUnlocked(msg.unlocked);
           setOffset(msg.now - Date.now());
-        } else if (msg.t === "online") setOnline(msg.online);
+        } else if (msg.t === "away") setAway(msg);
+        else if (msg.t === "online") setOnline(msg.online);
         else if (msg.t === "feed") setFeed(msg.events);
         else if (msg.t === "event") setFeed((f) => [msg.e, ...f].slice(0, FEED_SIZE));
         else if (msg.t === "lines") setChat(msg.lines.map(ohmSaid));
@@ -104,6 +128,21 @@ export function useOhm() {
       clearTimeout(first);
       clearInterval(every);
     };
+  }, []);
+
+  // Remember when you leave, for "while you were away" next time. Leaving = the page gets hidden:
+  // closing the tab or switching apps on a phone. That's the one moment every browser reports.
+  useEffect(() => {
+    const leave = () => {
+      if (document.visibilityState !== "hidden") return;
+      try {
+        localStorage.setItem("ohm-last-seen", String(Date.now()));
+      } catch {
+        // storage blocked: no "while you were away"
+      }
+    };
+    document.addEventListener("visibilitychange", leave);
+    return () => document.removeEventListener("visibilitychange", leave);
   }, []);
 
   // Messages disappear after 4 s.
@@ -145,6 +184,8 @@ export function useOhm() {
     pet,
     weather,
     brain,
+    unlocked,
+    away,
     online,
     feed,
     chat,
@@ -160,5 +201,6 @@ export function useOhm() {
     report: (lineId: number) => send({ t: "report", lineId }),
     rename,
     say,
+    dismissAway: () => setAway(null),
   };
 }

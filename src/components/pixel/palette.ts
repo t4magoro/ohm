@@ -9,4 +9,7 @@ export const PALETTE: Record<string, string> = {
   d: "#1d5c34", // dark green
   n: "#e8c48a", // wood
   c: "#d4e8f5", // cloud shade
+  o: "#ff8c1a", // hot orange (the sun on a hot day)
+  u: "#2a7fb8", // deep sky (rain, and the first color in charts)
+  m: "#d6337f", // magenta (the second color in charts)
 };
