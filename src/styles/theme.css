@@ -1,0 +1,73 @@
+/* Colors, fonts and the page-wide basics. The page follows Bandung's real sky: page.tsx sets data-sky
+   on <main>, and :has() carries it up to the whole page. Night (and every page without weather) is navy;
+   day is the portfolio's sky blue. */
+:root {
+  --background: #151827;
+  --foreground: #eceaf6;
+  --line: #3a4263; /* card borders */
+  --shadow: #07080f; /* hard pixel shadows */
+}
+:root:has([data-sky="day"]) {
+  --background: #6ec1ee;
+  --foreground: #141414;
+  --line: #141414;
+  --shadow: #141414;
+}
+:root:has([data-sky="rain"]) {
+  --background: #7f9db4;
+  --foreground: #141414;
+  --line: #141414;
+  --shadow: #141414;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-line: var(--line);
+  --font-sans: var(--font-term);
+  --font-mono: var(--font-term);
+  --font-pixel: var(--font-silk);
+}
+
+/* Cards and terminals are always dark, so these colors always sit on navy. Charge is lemon, mood is pink. */
+@theme {
+  --color-card: #20253a;
+  --color-edge: #3a4263;
+  --color-screen: #0d1020;
+  --color-text: #eceaf6;
+  --color-dim: #9297b8;
+  --color-ink: #141414;
+  --color-pink: #f28bab;
+  --color-mint: #86e3b5;
+  --color-lemon: #ffd65c;
+  --color-lilac: #b894ec;
+  --color-danger: #ff6b6b;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  transition: background-color 1s ease; /* day to night eases instead of flashing */
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+/* Scrollbars in the page's colors, thin and without arrows. */
+html {
+  scrollbar-color: var(--line) transparent;
+  scrollbar-width: thin;
+}
+
+::selection {
+  background: var(--color-lemon);
+  color: var(--color-ink);
+}
+
+/* In the base layer, so a component (like .term-input) can switch it off. A style outside every
+   layer would beat all layered styles, whatever their specificity. */
+@layer base {
+  :focus-visible {
+    outline: 3px dashed var(--color-lemon);
+    outline-offset: 3px;
+  }
+}

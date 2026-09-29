@@ -1,16 +1,9 @@
+import { BRAIN_HINTS, LANG_NAMES } from "@/content/spellbook";
 import type { Brain } from "@/lib/protocol";
 
-const LANGS = { id: "Indonesian", en: "English" } as const;
-const MAX_LEVEL = 3;
+const MAX_LEVEL = 3; // must match brain_level in pet.cpp
 
-// Must match brain_level in pet.cpp.
-const NEXT = [
-  "",
-  "At 50 words, Ohm starts following the word before.",
-  "At 300 words, Ohm remembers two words back.",
-  "Ohm's brain is fully grown. Keep teaching it words!",
-];
-
+/** What Ohm knows: its brain level and its words per language. */
 export function Spellbook({ brain }: { brain: Brain }) {
   return (
     <section className="card space-y-2 p-3">
@@ -30,14 +23,14 @@ export function Spellbook({ brain }: { brain: Brain }) {
         <li>
           knows <span className="text-lemon">{brain.vocab}</span> words
         </li>
-        {(Object.keys(LANGS) as (keyof typeof LANGS)[]).map((lang) => (
+        {(Object.keys(LANG_NAMES) as (keyof typeof LANG_NAMES)[]).map((lang) => (
           <li key={lang}>
-            *{LANGS[lang]} <span className="text-dim">lv</span> {brain.langs[lang].level}{" "}
+            *{LANG_NAMES[lang]} <span className="text-dim">lv</span> {brain.langs[lang].level}{" "}
             <span className="text-dim">({brain.langs[lang].words} words)</span>
           </li>
         ))}
       </ul>
-      <p className="text-base text-dim">{NEXT[brain.level]}</p>
+      <p className="text-base text-dim">{BRAIN_HINTS[brain.level]}</p>
     </section>
   );
 }

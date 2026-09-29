@@ -1,18 +1,8 @@
+import { WEATHER_TEXT } from "@/content/weather";
+import { hours } from "@/lib/format";
+import { statusEffects } from "@/lib/ohmState";
 import type { Brain, Pet, Weather } from "@/lib/protocol";
-import { StatBar } from "./StatBar";
-
-const HOUR = 3_600_000;
-const hours = (ms: number) => `${(ms / HOUR).toFixed(1)}h`;
-
-/** What Bandung's weather is doing to Ohm right now, as RPG status effects: [text, color]. */
-function effects(w: Weather): [string, string][] {
-  const list: [string, string][] = [[`${Math.round(w.tempC)}°C in Bandung`, ""]];
-  if (!w.isDay) list.push(["night: Ohm sleeps, poke it to wake it up", "text-lilac"], ["everything drains at half speed", "text-mint"]);
-  if (w.tempC > 30) list.push(["hot: the battery drains faster", "text-danger"]);
-  if (w.raining) list.push(["rain: Ohm's mood drains faster", "text-danger"]);
-  if (list.length === 1) list.push(["a calm day", "text-mint"]);
-  return list;
-}
+import { StatBar } from "../ui/StatBar";
 
 type Props = { pet: Pet; weather: Weather; brain: Brain; now: number; off: boolean };
 
@@ -43,8 +33,8 @@ export function StatusCard({ pet, weather, brain, now, off }: Props) {
         ))}
       </dl>
       <ul className="leading-tight">
-        {off && <li className="text-danger">*powered off: press reboot</li>}
-        {effects(weather).map(([text, color]) => (
+        {off && <li className={WEATHER_TEXT.off[1]}>*{WEATHER_TEXT.off[0]}</li>}
+        {statusEffects(weather).map(([text, color]) => (
           <li key={text} className={color}>
             *{text}
           </li>

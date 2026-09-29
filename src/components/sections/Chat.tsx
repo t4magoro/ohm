@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { cleanName, MAX_SAY } from "@/lib/protocol";
-import type { ChatItem } from "@/lib/useOhm";
-import { Log } from "./Log";
-
-const NOTE =
-  "# Ohm learns words from what you type. Nobody else sees your message, but Ohm can reuse its words in answers everyone sees, so don't type anything personal.";
+import { CHAT_NOTE, EMPTY_CHAT } from "@/content/chat";
+import type { ChatItem } from "@/hooks/useOhm";
+import { MAX_SAY } from "@/lib/protocol";
+import { Log } from "../ui/Log";
+import { WhoAmI } from "./WhoAmI";
 
 type Props = {
   items: ChatItem[];
@@ -20,8 +19,6 @@ type Props = {
 /** Talking to Ohm, as a terminal: your name on top, the conversation, then `$` and your message. */
 export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props) {
   const [text, setText] = useState("");
-  const [draft, setDraft] = useState<string | null>(null); // the name being typed, null when not editing
-  const draftOk = draft !== null && cleanName(draft) !== null;
 
   return (
     <section className="term flex h-full flex-col">
@@ -29,37 +26,10 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
         <span>talk to ohm</span>
       </h2>
 
-      <form
-        className="border-b-2 border-edge px-3 py-1"
-        onSubmit={(e) => {
-          e.preventDefault();
-          const clean = cleanName(draft ?? "");
-          if (!clean) return;
-          onRename(clean);
-          setDraft(null);
-        }}
-      >
-        <div className="flex items-center gap-2">
-          <label htmlFor="name" className="text-dim">
-            whoami:
-          </label>
-          <input
-            id="name"
-            value={draft ?? name}
-            onChange={(e) => setDraft(e.target.value)}
-            maxLength={16}
-            autoComplete="nickname"
-            className="term-input"
-          />
-          <button type="submit" className="term-btn" disabled={!draftOk}>
-            [save]
-          </button>
-        </div>
-        {draft !== null && !draftOk && <p className="text-danger">! 2-16 letters, numbers, spaces, - or _</p>}
-      </form>
+      <WhoAmI name={name} onRename={onRename} />
 
       <Log label="Chat with Ohm">
-        {items.length === 0 && <p className="text-dim"># no messages yet. say hi below, Ohm answers here.</p>}
+        {items.length === 0 && <p className="text-dim">{EMPTY_CHAT}</p>}
         <ul>
           {items.map((item) =>
             item.from === "you" ? (
@@ -89,7 +59,7 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
           <details>), so the chat keeps its space. */}
       <div className="border-t-2 border-edge px-3 pt-1.5 text-base leading-snug text-dim">
         <p id="chat-note" className="max-lg:hidden">
-          {NOTE}
+          {CHAT_NOTE}
         </p>
         <details className="group lg:hidden">
           <summary className="cursor-pointer list-none text-lemon [&::-webkit-details-marker]:hidden">
@@ -97,7 +67,7 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
             <span className="hidden group-open:inline">[-] readme</span>
             <span className="text-dim group-open:hidden"> before you type</span>
           </summary>
-          <p className="mt-1">{NOTE}</p>
+          <p className="mt-1">{CHAT_NOTE}</p>
         </details>
       </div>
       <form

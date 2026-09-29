@@ -11,7 +11,7 @@ import {
   type Pet,
   type ServerMsg,
   type Weather,
-} from "./protocol";
+} from "@/lib/protocol";
 
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/^http/, "ws")}/ws`;
 const FEED_SIZE = 30;
