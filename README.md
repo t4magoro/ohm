@@ -1,7 +1,7 @@
 # ohm
 ![Preview of the site: Ohm a internet's robot pet](src/app/opengraph-image.png)
 
-I Create this project as just as an experiment with markov chain algorithm i hope later i can add more feature to this project
+I Create this project just as an experiment with markov chain algorithm i hope later i can add more feature to this project
 since this is still an on going project but here it is the ohm robot projects.
 
 **Ohm, the internet's robot pet**: one pixel robot shared by everyone online.
