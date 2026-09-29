@@ -187,6 +187,10 @@ export default function Home() {
 
       <footer className="mt-auto space-y-1 text-xs opacity-70">
         <p>
+          Privacy: no accounts. Your browser keeps a random visitor ID and your name. Ohm stores your IP address only
+          as a salted hash, to block spam. The words you teach appear in the feed with your name.
+        </p>
+        <p>
           Weather data by{" "}
           <a href="https://open-meteo.com/" className="underline">
             Open-Meteo.com
