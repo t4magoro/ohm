@@ -53,7 +53,8 @@ export type DeviceButton = { label: string; onClick: () => void; disabled: boole
 
 export function Device({ screen, buttons }: { screen: ReactNode; buttons: DeviceButton[] }) {
   return (
-    <div className="relative mx-auto w-full max-w-sm">
+    // A container, so the labels can size themselves to the toy (cqw = 1% of its width).
+    <div className="relative w-full [container-type:inline-size]">
       {/* A hard pixel shadow that follows the egg's outline. */}
       <PixelArt art={SHELL} className="block w-full drop-shadow-[6px_6px_0_var(--shadow)]" />
       <div className="absolute overflow-hidden" style={place(9, 11, 30, 23)}>
@@ -70,7 +71,7 @@ export function Device({ screen, buttons }: { screen: ReactNode; buttons: Device
         >
           {/* Sinks one pixel the moment it's pressed, like a real button. */}
           <PixelArt art={BUTTON} className="w-[78%] group-active:translate-y-[12.5%]" />
-          <span className="font-pixel text-[10px] font-bold leading-none text-ink sm:text-xs">{b.label}</span>
+          <span className="font-pixel text-[clamp(8px,3.2cqw,12px)] font-bold leading-none text-ink">{b.label}</span>
         </button>
       ))}
     </div>

@@ -1,4 +1,5 @@
 import { MILESTONES, type FeedEvent } from "@/lib/protocol";
+import { Log } from "./Log";
 
 // What each event says, and its color in the log.
 const TEXT: Record<Exclude<FeedEvent["type"], "taught" | "unlocked">, [string, string]> = {
@@ -14,15 +15,16 @@ function describe(e: FeedEvent): [string, string] {
   return TEXT[e.type];
 }
 
-/** The live feed as a terminal log: oldest at the top, newest at the bottom, like `tail -f`. */
-export function Feed({ events }: { events: FeedEvent[] }) {
+const NEW_MS = 5_000; // a line this young slides in; older ones (loaded with the page) just sit there
+
+/** The live feed as a terminal log. `now` is server time, to spot the lines that just arrived. */
+export function Feed({ events, now }: { events: FeedEvent[]; now: number }) {
   return (
-    <section className="term">
+    <section className="term flex h-full flex-col">
       <h2 className="term-bar">
         <span>live feed</span>
       </h2>
-      {/* column-reverse keeps the scroll pinned to the newest line, no JavaScript needed. */}
-      <div className="flex max-h-64 flex-col-reverse overflow-y-auto px-3 py-2">
+      <Log label="Live feed">
         {events.length === 0 ? (
           <p className="text-dim"># nothing yet. be the first to charge Ohm!</p>
         ) : (
@@ -30,7 +32,7 @@ export function Feed({ events }: { events: FeedEvent[] }) {
             {[...events].reverse().map((e) => {
               const [text, color] = describe(e);
               return (
-                <li key={e.id}>
+                <li key={e.id} className={now - e.at < NEW_MS ? "motion-safe:animate-rise" : ""}>
                   <time className="text-dim" dateTime={new Date(e.at).toISOString()}>
                     {new Date(e.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </time>{" "}
@@ -40,7 +42,7 @@ export function Feed({ events }: { events: FeedEvent[] }) {
             })}
           </ul>
         )}
-      </div>
+      </Log>
     </section>
   );
 }
