@@ -1,13 +1,15 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Chat } from "@/components/Chat";
 import { Feed } from "@/components/Feed";
 import { OhmSprite, type Face } from "@/components/OhmSprite";
+import { Sky } from "@/components/Sky";
 import { Spellbook } from "@/components/Spellbook";
 import { StatBar } from "@/components/StatBar";
 import { cleanName, valueNow, type Pet, type Weather } from "@/lib/protocol";
-import { useOhm } from "@/lib/useOhm";
+import { useOhm, type Away } from "@/lib/useOhm";
 import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/lib/useShake";
 
 const HOUR = 3_600_000;
@@ -41,6 +43,18 @@ function weatherNotes(w: Weather) {
 const sceneColor = (w: Weather) =>
   !w.isDay ? "bg-[#cdd5f3]" : w.raining ? "bg-[#dfe7ef]" : w.tempC > 30 ? "bg-[#ffe2c4]" : "bg-[#fff8e7]";
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+
+/** "While you were away, Ohm learned 14 new words and shut down 1 time. …" */
+function awayText(a: Away) {
+  const news = [
+    a.learned > 0 && `learned ${plural(a.learned, "new word")}`,
+    a.shutdowns > 0 && `shut down ${plural(a.shutdowns, "time")}`,
+  ];
+  const said = a.said > 0 ? ` It has used the words you taught ${plural(a.said, "time")} so far.` : "";
+  return `👋 While you were away, Ohm ${news.filter(Boolean).join(" and ")}.${said}`;
+}
+
 export default function Home() {
   const ohm = useOhm();
   const [draft, setDraft] = useState<string | null>(null); // the name being typed, null when not editing
@@ -65,13 +79,26 @@ export default function Home() {
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 p-6 font-mono">
-      <header className="flex items-baseline justify-between">
+      <header className="flex items-baseline justify-between gap-3">
         <h1 className="text-2xl font-bold">Ohm</h1>
+        <Link href="/vitals" className="ml-auto text-sm underline">
+          📊 Vitals
+        </Link>
         <p className="text-sm">{ohm.banned ? "⛔ Banned" : ohm.connected ? `🟢 ${ohm.online} online` : "🔴 Reconnecting…"}</p>
       </header>
 
-      <section className={`grid place-items-center rounded-lg p-6 ${sceneColor(weather)}`}>
-        <OhmSprite face={faceOf(pet, weather, now, pokedAt)} />
+      {ohm.away && (
+        <p role="status" className="rounded border-2 border-current p-3 text-sm">
+          {awayText(ohm.away)}{" "}
+          <button type="button" className="underline" onClick={ohm.dismissAway}>
+            OK
+          </button>
+        </p>
+      )}
+
+      <section className={`relative grid place-items-center overflow-hidden rounded-lg p-6 ${sceneColor(weather)}`}>
+        <Sky weather={weather} />
+        <OhmSprite face={faceOf(pet, weather, now, pokedAt)} parts={ohm.unlocked} />
       </section>
       <p className="text-sm">Bandung now: {weatherNotes(weather)}</p>
 

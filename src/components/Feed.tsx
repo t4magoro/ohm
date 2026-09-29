@@ -1,13 +1,17 @@
-import type { FeedEvent } from "@/lib/protocol";
+import { MILESTONES, type FeedEvent } from "@/lib/protocol";
 
-const TEXT: Record<Exclude<FeedEvent["type"], "taught">, string> = {
+const TEXT: Record<Exclude<FeedEvent["type"], "taught" | "unlocked">, string> = {
   charge: "charged Ohm ⚡",
   play: "played with Ohm 🎈",
   reboot: "rebooted Ohm 🔁",
   shutdown: "shut down: its battery ran out 🪫",
 };
 
-const describe = (e: FeedEvent) => (e.type === "taught" ? `taught Ohm: ${e.detail} 📚` : TEXT[e.type]);
+function describe(e: FeedEvent) {
+  if (e.type === "taught") return `taught Ohm: ${e.detail} 📚`;
+  if (e.type === "unlocked") return `unlocked ${MILESTONES.find((m) => m.id === e.detail)?.part ?? "a new part"} 🎉`;
+  return TEXT[e.type];
+}
 
 export function Feed({ events }: { events: FeedEvent[] }) {
   if (events.length === 0) return <p className="text-sm opacity-70">Nothing yet. Be the first to charge Ohm!</p>;
