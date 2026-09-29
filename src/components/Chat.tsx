@@ -13,7 +13,8 @@ export function Chat({ items, disabled, onSay, onReport }: Props) {
     <section className="space-y-2">
       <h2 className="font-bold">Talk to Ohm</h2>
       <p className="text-xs opacity-70">
-        Ohm learns words from what you type. Everyone sees Ohm&apos;s answers, but nobody else sees your message.
+        Ohm learns words from what you type. Nobody else sees your message, but Ohm can reuse its words in answers
+        everyone sees, so don&apos;t type anything personal.
       </p>
       {items.length > 0 && (
         <ul className="space-y-1 text-sm">
