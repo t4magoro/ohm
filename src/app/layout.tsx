@@ -17,8 +17,12 @@ const term = VT323({
 });
 
 export const metadata: Metadata = {
-  title: "Ohm",
-  description: "The internet's robot pet",
+  metadataBase: new URL("https://t4magoro.github.io"),
+  title: { default: "Ohm, the internet's robot pet", template: "%s | Ohm" },
+  description:
+    "One pixel robot pet shared by everyone online. Charge it, play with it and teach it to talk. Its battery follows the live weather in Bandung.",
+   alternates: { canonical: "/ohm/" },
+  openGraph: { type: "website", siteName: "Ohm" },
 };
 
 // The phone layout fills the screen exactly (h-dvh), so:
