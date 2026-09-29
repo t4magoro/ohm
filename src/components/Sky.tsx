@@ -72,14 +72,14 @@ export function Sky({ weather: w }: { weather: Weather }) {
         </div>
       )}
       {w.isDay ? (
-        <PixelArt art={w.tempC > 30 ? HOT_SUN : SUN} className="absolute left-4 top-4 w-12" />
+        <PixelArt art={w.tempC > 30 ? HOT_SUN : SUN} className="absolute left-[4%] top-[5%] w-[17%]" />
       ) : (
-        <PixelArt art={MOON} className="absolute left-4 top-4 w-10" />
+        <PixelArt art={MOON} className="absolute left-[4%] top-[5%] w-[14%]" />
       )}
       {w.raining ? (
-        <PixelArt art={CLOUD} className="absolute right-4 top-6 w-20" />
+        <PixelArt art={CLOUD} className="absolute right-[4%] top-[8%] w-[27%]" />
       ) : (
-        !w.isDay && <PixelArt art={STARS} className="absolute right-4 top-4 w-24" /> // clouds hide the stars
+        !w.isDay && <PixelArt art={STARS} className="absolute right-[4%] top-[5%] w-[30%]" /> // clouds hide the stars
       )}
     </>
   );

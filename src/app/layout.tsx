@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Silkscreen, VT323 } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Silkscreen (the portfolio's pixel font) for titles and labels,
+// VT323 (an old terminal font) for everything you read and type.
+const silk = Silkscreen({
+  variable: "--font-silk",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const term = VT323({
+  variable: "--font-term",
   subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -19,10 +23,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${silk.variable} ${term.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

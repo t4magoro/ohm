@@ -41,13 +41,13 @@ function Axes({ yMax, fmtY, ticks }: { yMax: number; fmtY: (y: number) => string
 
 function DataTable({ head, rows }: { head: string[]; rows: (string | number)[][] }) {
   return (
-    <details className="text-xs">
-      <summary className="cursor-pointer opacity-70">Show as table</summary>
+    <details className="text-base">
+      <summary className="cursor-pointer text-dim">Show as table</summary>
       <table className="mt-1 w-full tabular-nums">
         <thead>
           <tr>
             {head.map((h) => (
-              <th key={h} className="text-left font-normal opacity-70">
+              <th key={h} className="text-left font-normal text-dim">
                 {h}
               </th>
             ))}
@@ -94,10 +94,10 @@ export function StepChart({ title, xs, series, from, to, step, yMax, ticks, fmtX
   const readout = (i: number) => series.map((s) => `${s.name} ${fmtY(s.values[i])}`).join(" · ");
 
   return (
-    <figure className="space-y-1">
-      <figcaption className="text-sm font-bold">{title}</figcaption>
+    <figure className="card space-y-2 p-3">
+      <figcaption className="font-pixel text-xs font-bold">{title}</figcaption>
       {series.length > 1 && (
-        <ul className="flex gap-4 text-xs">
+        <ul className="flex gap-4 text-base">
           {series.map((s) => (
             <li key={s.name} className="flex items-center gap-1">
               <svg width="14" height="4" aria-hidden>
@@ -158,8 +158,8 @@ export function BarChart({ title, bars, fmt }: BarProps) {
   const ticks = bars.flatMap((b, i) => (i % labelEvery === 0 ? [{ at: LEFT + slot * (i + 0.5), label: b.label }] : []));
 
   return (
-    <figure className="space-y-1">
-      <figcaption className="text-sm font-bold">{title}</figcaption>
+    <figure className="card space-y-2 p-3">
+      <figcaption className="font-pixel text-xs font-bold">{title}</figcaption>
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={title}>
         <Axes yMax={yMax} fmtY={fmt} ticks={ticks} />
         {bars.map((b, i) => (
@@ -169,7 +169,7 @@ export function BarChart({ title, bars, fmt }: BarProps) {
               y={TOP + PLOT_H - height(b.value)}
               width={width}
               height={height(b.value)}
-              fill={PALETTE.u}
+              fill={PALETTE.a}
               shapeRendering="crispEdges"
             />
             <rect x={LEFT + slot * i} y={TOP} width={slot} height={PLOT_H} fill="transparent" className="hover:fill-current hover:opacity-10">

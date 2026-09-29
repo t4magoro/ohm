@@ -1,28 +1,230 @@
 @import "tailwindcss";
 
+/* The page follows Bandung's real sky: page.tsx sets data-sky on <main>, and :has() carries it up to
+   the whole page. Night (and every page without weather) is navy; day is the portfolio's sky blue. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #151827;
+  --foreground: #eceaf6;
+  --line: #3a4263; /* card borders */
+  --shadow: #07080f; /* hard pixel shadows */
+}
+:root:has([data-sky="day"]) {
+  --background: #6ec1ee;
+  --foreground: #141414;
+  --line: #141414;
+  --shadow: #141414;
+}
+:root:has([data-sky="rain"]) {
+  --background: #7f9db4;
+  --foreground: #141414;
+  --line: #141414;
+  --shadow: #141414;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-line: var(--line);
+  --font-sans: var(--font-term);
+  --font-mono: var(--font-term);
+  --font-pixel: var(--font-silk);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Cards and terminals are always dark, so these colors always sit on navy. Charge is lemon, mood is pink. */
+@theme {
+  --color-card: #20253a;
+  --color-edge: #3a4263;
+  --color-screen: #0d1020;
+  --color-text: #eceaf6;
+  --color-dim: #9297b8;
+  --color-ink: #141414;
+  --color-pink: #f28bab;
+  --color-mint: #86e3b5;
+  --color-lemon: #ffd65c;
+  --color-lilac: #b894ec;
+  --color-danger: #ff6b6b;
+
+  /* A strong ease-out: fast at the start, where the eye is. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  /* Pixel motion jumps frame by frame with steps(), like an LCD pet. */
+  --animate-bob: bob 1s steps(1, end) infinite; /* one pixel (1 of 38); OhmSprite sets the speed from its mood */
+  --animate-hop: hop 360ms steps(3, end); /* when someone charges or plays */
+  --animate-pop: pop 200ms var(--ease-out); /* the speech bubble grows out of its tail */
+  --animate-rise: rise 200ms var(--ease-out); /* new messages */
+  --animate-fade: fade 200ms ease; /* the same, with reduced motion: no movement, only a fade */
+  --animate-blink: blink 1s steps(1, end) infinite;
+
+  @keyframes bob {
+    50% {
+      transform: translateY(-2.63%);
+    }
+  }
+  @keyframes hop {
+    40% {
+      transform: translateY(-12%);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
   }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 1s ease; /* day to night eases instead of flashing */
+  font-size: 1.125rem;
+  line-height: 1.3;
+}
+
+::selection {
+  background: var(--color-lemon);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 3px dashed var(--color-lemon);
+  outline-offset: 3px;
+}
+
+/* In the components layer, so a Tailwind class like text-dim still wins over them. */
+@layer components {
+  /* A dark card with a hard pixel shadow, like the portfolio's windows and an RPG status card. */
+  .card {
+    background: var(--color-card);
+    color: var(--color-text);
+    border: 3px solid var(--line);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+
+  /* The title: white pixel outline and a pink drop shadow, like the portfolio's name. */
+  .title-outline {
+    color: var(--color-ink);
+    text-shadow:
+      2px 0 #fff, -2px 0 #fff, 0 2px #fff, 0 -2px #fff,
+      2px 2px #fff, -2px -2px #fff, 2px -2px #fff, -2px 2px #fff,
+      5px 5px var(--color-pink);
+  }
+
+  /* The portfolio's notched pixel button with a stepped shadow. Sinks the moment it's pressed. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    color: var(--color-ink);
+    padding: 0.2rem 0.7rem;
+    font-family: var(--font-silk);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    box-shadow:
+      0 -3px var(--color-ink), 0 3px var(--color-ink), -3px 0 var(--color-ink), 3px 0 var(--color-ink),
+      3px 6px var(--color-ink), 6px 3px var(--color-ink);
+    transition: transform 160ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+    }
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    transition-duration: 60ms;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+  }
+
+  /* A terminal window: the feed, the chat, and every text box. Always dark, like a real screen. */
+  .term {
+    background: var(--color-screen);
+    color: var(--color-text);
+    border: 3px solid var(--line);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .term:focus-within {
+    border-color: var(--color-pink);
+  }
+  /* A classic Mac title bar: stripes, a close box on the left, the title in the middle. */
+  .term-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    padding: 5px 6px;
+    border-bottom: 3px solid var(--line);
+    background: repeating-linear-gradient(to bottom, var(--color-edge) 0 2px, transparent 2px 4px) content-box;
+  }
+  .term-bar::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-screen);
+    border: 2px solid var(--color-edge);
+    box-shadow: 0 0 0 3px var(--color-screen);
+  }
+  .term-bar > * {
+    background: var(--color-screen);
+    padding: 0 8px;
+    font-family: var(--font-silk);
+    font-size: 11px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .term-input {
+    min-width: 0;
+    flex: 1;
+    background: transparent;
+    color: var(--color-text);
+    outline: none;
+    caret-color: var(--color-pink);
+    caret-shape: block; /* a block cursor where the browser supports it */
+  }
+  .term-input::placeholder {
+    color: var(--color-dim);
+  }
+  /* A text button inside a terminal: [send] */
+  .term-btn {
+    color: var(--color-pink);
+    padding: 0 0.25rem;
+  }
+  .term-btn:focus-visible {
+    background: var(--color-pink);
+    color: var(--color-screen);
+    outline: none;
+  }
+  /* Hover only with a mouse: on phones a tap would leave it stuck on. */
+  @media (hover: hover) {
+    .term-btn:hover:not(:disabled) {
+      background: var(--color-pink);
+      color: var(--color-screen);
+    }
+  }
+  .term-btn:disabled {
+    opacity: 0.4;
+  }
 }
 
 /* Rain in Ohm's scene (Sky.tsx): starts one copy up, ends where the next loop starts. */

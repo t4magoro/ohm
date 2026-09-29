@@ -47,9 +47,9 @@ function Milestone({ p, now }: { p: MilestoneProgress; now: number }) {
 
   return (
     <div className="space-y-1">
-      <div className="flex justify-between gap-3 text-sm">
+      <div className="flex justify-between gap-3">
         <span>{m.goalText}</span>
-        <span className="whitespace-nowrap tabular-nums">{p.done ? "✅" : `${value} / ${m.goal.toLocaleString()}`}</span>
+        <span className="whitespace-nowrap tabular-nums">{p.done ? "done" : `${value} / ${m.goal.toLocaleString()}`}</span>
       </div>
       <div
         role="progressbar"
@@ -57,11 +57,11 @@ function Milestone({ p, now }: { p: MilestoneProgress; now: number }) {
         aria-valuenow={Math.round(done)}
         aria-valuemin={0}
         aria-valuemax={100}
-        className="h-3 overflow-hidden rounded border-2 border-current"
+        className="h-3 overflow-hidden border-2 border-edge bg-background"
       >
-        <div className="h-full" style={{ width: `${done}%`, background: PALETTE.u }} />
+        <div className="h-full bg-mint" style={{ width: `${done}%` }} />
       </div>
-      <p className="text-xs opacity-70">{p.done ? eta : `Reward: ${m.part} · ${eta}`}</p>
+      <p className="text-base text-dim">{p.done ? eta : `Reward: ${m.part} · ${eta}`}</p>
     </div>
   );
 }
@@ -83,20 +83,23 @@ export default function VitalsPage() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 p-6 font-mono">
-      <header className="flex items-baseline justify-between">
-        <h1 className="text-2xl font-bold">Ohm&apos;s vitals</h1>
-        <Link href="/" className="text-sm underline">
-          ← Back to Ohm
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-8 px-4 py-5">
+      <header className="flex items-center justify-between">
+        <h1 className="title-outline font-pixel text-2xl font-bold leading-none">Ohm&apos;s vitals</h1>
+        <Link href="/" className="btn">
+          back to Ohm
         </Link>
       </header>
 
       {!data ? (
-        <p>{failed ? "Couldn't reach Ohm. Try again in a moment." : "Reading Ohm's vitals…"}</p>
+        <p className="text-xl">
+          <span className="text-mint">ohm&gt;</span>{" "}
+          {failed ? "Couldn't reach Ohm. Try again in a moment." : "reading Ohm's vitals..."}
+        </p>
       ) : (
         <>
-          <section className="space-y-4">
-            <h2 className="font-bold">Milestones</h2>
+          <section className="card space-y-4 p-3">
+            <h2 className="font-pixel text-sm font-bold">Milestones</h2>
             {data.milestones.map((p) => (
               <Milestone key={p.id} p={p} now={data.now} />
             ))}
@@ -105,15 +108,15 @@ export default function VitalsPage() {
           <Spellbook brain={data.brain} />
 
           {data.snapshots.length === 0 ? (
-            <p className="text-sm opacity-70">No hourly readings yet: Ohm writes one down every hour.</p>
+            <p className="text-dim">No hourly readings yet: Ohm writes one down every hour.</p>
           ) : (
             <>
               <StepChart
                 title="Charge and mood, last 7 days"
                 xs={data.snapshots.map((s) => s.at)}
                 series={[
-                  { name: "Charge", color: PALETTE.u, values: data.snapshots.map((s) => s.charge) },
-                  { name: "Mood", color: PALETTE.m, values: data.snapshots.map((s) => s.mood) },
+                  { name: "Charge", color: PALETTE.y, values: data.snapshots.map((s) => s.charge) },
+                  { name: "Mood", color: PALETTE.r, values: data.snapshots.map((s) => s.mood) },
                 ]}
                 from={data.now - WEEK}
                 to={data.now}
@@ -126,7 +129,7 @@ export default function VitalsPage() {
               <StepChart
                 title="Visitors online, last 7 days"
                 xs={data.snapshots.map((s) => s.at)}
-                series={[{ name: "Online", color: PALETTE.u, values: data.snapshots.map((s) => s.online) }]}
+                series={[{ name: "Online", color: PALETTE.a, values: data.snapshots.map((s) => s.online) }]}
                 from={data.now - WEEK}
                 to={data.now}
                 step={HOUR}
@@ -149,12 +152,12 @@ export default function VitalsPage() {
           )}
 
           <section className="space-y-2">
-            <h2 className="text-sm font-bold">Top words</h2>
+            <h2 className="font-pixel text-sm font-bold">Top words</h2>
             {data.topWords.length === 0 ? (
-              <p className="text-sm opacity-70">Ohm hasn&apos;t learned any words yet.</p>
+              <p className="text-dim">Ohm hasn&apos;t learned any words yet.</p>
             ) : (
-              <table className="w-full text-sm tabular-nums">
-                <thead className="text-left text-xs opacity-70">
+              <table className="term w-full">
+                <thead className="text-left text-dim">
                   <tr>
                     <th className="font-normal">Word</th>
                     <th className="font-normal">Typed</th>
