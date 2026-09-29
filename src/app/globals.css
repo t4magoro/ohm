@@ -161,9 +161,13 @@ html {
   color: var(--color-ink);
 }
 
-:focus-visible {
-  outline: 3px dashed var(--color-lemon);
-  outline-offset: 3px;
+/* In the base layer, so a component (like .term-input) can switch it off. A style outside every
+   layer would beat all layered styles, whatever their specificity. */
+@layer base {
+  :focus-visible {
+    outline: 3px dashed var(--color-lemon);
+    outline-offset: 3px;
+  }
 }
 
 /* In the components layer, so a Tailwind class like text-dim still wins over them. */

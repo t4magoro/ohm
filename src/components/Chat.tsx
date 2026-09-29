@@ -123,7 +123,13 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
           aria-describedby="chat-note" // screen readers read the note when you focus the box
           className="term-input"
         />
-        <button type="submit" disabled={disabled || !text.trim()} className="term-btn">
+        <button
+          type="submit"
+          disabled={disabled || !text.trim()}
+          // Keeps the focus (and the phone's keyboard) in the text box when you tap [send].
+          onPointerDown={(e) => e.preventDefault()}
+          className="term-btn"
+        >
           [send]
         </button>
       </form>

@@ -38,10 +38,13 @@ const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot"].map((label)
 //   <main>'s grid: header (row 1), Ohm (row 2), the panels (all in row 3, one visible), tabs (row 4).
 // - Desktop (lg and up): three columns that fill the window. Ohm | status + chat | feed + spellbook.
 // --panel is the console's height on phones; --console-top tells the mountains where the ground is.
+// Typing mode (phones): while a text box has focus, the keyboard takes half the screen, so Ohm and the
+// tab bar step aside and the chat gets all the room (`has-[input:focus]`, the `group/page` hides below).
+// Tap anywhere else and everything comes back.
 const LAYOUT =
-  "relative mx-auto grid h-dvh w-full max-w-[96rem] overflow-hidden text-foreground " +
+  "group/page relative mx-auto grid h-dvh w-full max-w-[96rem] overflow-hidden text-foreground " +
   "[--panel:40dvh] [--console-top:calc(var(--panel)+3.5rem+3px+env(safe-area-inset-bottom))] " +
-  "grid-rows-[auto_minmax(0,1fr)_var(--panel)_auto] " +
+  "grid-rows-[auto_minmax(0,1fr)_var(--panel)_auto] max-lg:has-[input:focus]:grid-rows-[auto_0_minmax(0,1fr)_0] " +
   "lg:grid-cols-[minmax(0,26rem)_minmax(22rem,1fr)_minmax(0,22rem)] lg:grid-rows-1 lg:gap-6 lg:p-6";
 const COLUMN = "contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5";
 
@@ -109,7 +112,10 @@ export default function Home() {
         </header>
 
         {/* A size container: Ohm's toy grows to fill whatever room is left, on any screen. */}
-        <section aria-label="Ohm" className="col-start-1 row-start-2 grid min-h-0 place-items-center px-4 py-3 [container-type:size] lg:flex-1 lg:p-0">
+        <section
+          aria-label="Ohm"
+          className="col-start-1 row-start-2 grid min-h-0 place-items-center px-4 py-3 [container-type:size] max-lg:group-has-[input:focus]/page:hidden lg:flex-1 lg:p-0"
+        >
           {ready ? (
             <Pet
               pet={ready.pet}
@@ -188,10 +194,11 @@ export default function Home() {
         </Panel>
       </div>
 
-      <TabBar tab={tab} onTab={openTab} dots={dots} className="col-start-1 row-start-4 lg:hidden" />
+      <TabBar tab={tab} onTab={openTab} dots={dots} className="col-start-1 row-start-4 group-has-[input:focus]/page:hidden lg:hidden" />
 
       {ohm.away && (
-        <div className="term fixed inset-x-3 top-3 z-30 flex items-start gap-2 px-3 py-2 motion-safe:animate-pop motion-reduce:animate-fade lg:left-auto lg:right-6 lg:top-6 lg:w-96">
+        // Waits while you type on a phone (typing mode), so it doesn't cover the chat.
+        <div className="term fixed inset-x-3 top-3 z-30 flex items-start gap-2 px-3 py-2 motion-safe:animate-pop motion-reduce:animate-fade max-lg:group-has-[input:focus]/page:hidden lg:left-auto lg:right-6 lg:top-6 lg:w-96">
           <p className="flex-1">
             <span className="text-mint">ohm&gt;</span> {awayText(ohm.away)}
           </p>
