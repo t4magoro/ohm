@@ -1,119 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
-import { CardSkeleton } from "@/components/Skeleton";
-import { HOURS_RANGE, type AdminOverview, type AdminSearch, type Settings } from "@/lib/protocol";
-
-const API = process.env.NEXT_PUBLIC_API_URL ?? "";
-const when = (at: number) => new Date(at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
-const hoursInput = "w-20 border-2 border-edge bg-screen px-1 text-lg outline-none caret-pink focus:border-pink";
-// Text buttons like [approve]: green for yes, red for the ones that take something away.
-const good = "term-btn text-mint hover:text-screen focus-visible:text-screen";
-const bad = "term-btn text-danger hover:text-screen focus-visible:text-screen";
-
-/** Calls the admin API. The token goes in a header, never in the URL: URLs end up in logs and history. */
-async function api(token: string, path: string, body?: object) {
-  const res = await fetch(`${API}/admin/${path}`, {
-    method: body ? "POST" : "GET",
-    headers: { Authorization: `Bearer ${token}`, ...(body ? { "Content-Type": "application/json" } : {}) },
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const json = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(json.error ?? `The API answered ${res.status}`);
-  return json;
-}
-
-/** Runs an admin action: (path, body, message shown when it worked). */
-type Run = (path: string, body: object, done: string) => void;
-
-function Card({ id, title, count, children }: { id: string; title: string; count?: number; children: ReactNode }) {
-  return (
-    <section id={id} className="card scroll-mt-24 p-3">
-      <h2 className="mb-2 font-pixel text-sm font-bold">
-        {title} {count !== undefined && <span className="text-lemon">({count})</span>}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function List({ empty, children }: { empty: string; children: ReactNode[] }) {
-  return children.length === 0 ? <p className="text-dim">{empty}</p> : <ul className="divide-y-2 divide-edge">{children}</ul>;
-}
-
-/** One line of a list: the word, grey details, and its actions on the right. */
-function Row({ word, meta, children }: { word: ReactNode; meta?: ReactNode; children: ReactNode }) {
-  return (
-    <li className="flex flex-wrap items-baseline gap-x-3 py-1.5">
-      <span className="text-lemon">{word}</span>
-      {meta && <span className="text-dim">{meta}</span>}
-      <span className="ml-auto flex flex-wrap gap-1">{children}</span>
-    </li>
-  );
-}
-
-// The rows, shared by the lists and the search results so both work the same way.
-const PendingRow = ({ p, run, busy }: { p: AdminOverview["pending"][number]; run: Run; busy: boolean }) => (
-  <Row word={p.word} meta={`seen ${p.seen}x`}>
-    <button type="button" className={good} disabled={busy} onClick={() => run("approve", { word: p.word, lang: "id" }, `Ohm learned "${p.word}"`)}>
-      [approve id]
-    </button>
-    <button type="button" className={good} disabled={busy} onClick={() => run("approve", { word: p.word, lang: "en" }, `Ohm learned "${p.word}"`)}>
-      [approve en]
-    </button>
-    <button type="button" className={bad} disabled={busy} onClick={() => run("block", { word: p.word }, `Blocked "${p.word}"`)}>
-      [block]
-    </button>
-  </Row>
-);
-
-const WordRow = ({ w, run, busy }: { w: AdminOverview["words"][number]; run: Run; busy: boolean }) => (
-  <Row word={w.word} meta={`by ${w.by}, ${when(w.at)}`}>
-    <button
-      type="button"
-      className={bad}
-      disabled={busy}
-      // Forgetting deletes everything Ohm learned around the word, so it asks first.
-      onClick={() => confirm(`Forget "${w.word}" and block it?`) && run("block", { word: w.word }, `Ohm forgot "${w.word}"`)}
-    >
-      [forget + block]
-    </button>
-    {w.ipHash && (
-      <button type="button" className={bad} disabled={busy} onClick={() => run("ban", { ipHash: w.ipHash }, `Banned ${w.ipHash}`)}>
-        [ban teacher]
-      </button>
-    )}
-  </Row>
-);
-
-const BlockedRow = ({ b, run, busy }: { b: AdminOverview["blocked"][number]; run: Run; busy: boolean }) => (
-  <Row word={b.word}>
-    <button type="button" className={good} disabled={busy} onClick={() => run("unblock", { word: b.word }, `Unblocked "${b.word}"`)}>
-      [unblock]
-    </button>
-  </Row>
-);
-
-const ReportRow = ({ r, run, busy }: { r: AdminOverview["reports"][number]; run: Run; busy: boolean }) => (
-  <Row word={`"${r.text}"`} meta={`Ohm to ${r.to ?? "a deleted line"}, ${when(r.at)}`}>
-    <button
-      type="button"
-      className={bad}
-      disabled={busy}
-      onClick={() => confirm("Delete this line for everyone?") && run("unsay", { id: r.lineId }, "Line deleted for everyone")}
-    >
-      [delete line]
-    </button>
-    {r.ipHash && (
-      <button type="button" className={bad} disabled={busy} onClick={() => run("ban", { ipHash: r.ipHash }, `Banned ${r.ipHash}`)}>
-        [ban]
-      </button>
-    )}
-    <button type="button" className={good} disabled={busy} onClick={() => run("dismiss", { id: r.id }, "Report dismissed")}>
-      [dismiss]
-    </button>
-  </Row>
-);
+import { useEffect, useState } from "react";
+import { AdminCard, List } from "@/components/admin/AdminCard";
+import { BatteryForm } from "@/components/admin/BatteryForm";
+import { LoginForm } from "@/components/admin/LoginForm";
+import { BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/components/admin/ModerationRows";
+import { SearchResults } from "@/components/admin/SearchResults";
+import { CardSkeleton } from "@/components/ui/Skeleton";
+import { adminApi } from "@/lib/adminApi";
+import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
 
 export default function Admin() {
   const [token, setToken] = useState(""); // only in memory: gone when you close the tab
@@ -130,7 +25,7 @@ export default function Admin() {
     if (!q || !data) return;
     let live = true;
     const t = setTimeout(() => {
-      api(token, `search?q=${encodeURIComponent(q)}`)
+      adminApi(token, `search?q=${encodeURIComponent(q)}`)
         .then((result: AdminSearch) => live && setFound(result))
         .catch((e: Error) => live && setStatus(`Error: ${e.message}`));
     }, 250);
@@ -144,8 +39,8 @@ export default function Admin() {
   async function run(path?: string, body?: object, done = "") {
     setBusy(true);
     try {
-      if (path) await api(token, path, body);
-      setData(await api(token, "overview"));
+      if (path) await adminApi(token, path, body);
+      setData(await adminApi(token, "overview"));
       setStatus(done);
       return true;
     } catch (e) {
@@ -161,32 +56,7 @@ export default function Admin() {
     return (
       <main className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6">
         <h1 className="title-outline font-pixel text-3xl font-bold leading-none">Ohm admin</h1>
-        <form
-          className="term flex max-w-md items-center gap-2 px-3 py-1.5"
-          onSubmit={(e) => {
-            e.preventDefault();
-            run();
-          }}
-        >
-          <label htmlFor="token" className="sr-only">
-            Admin token
-          </label>
-          <span className="text-pink" aria-hidden>
-            $
-          </span>
-          <input
-            id="token"
-            type="password"
-            autoComplete="current-password"
-            placeholder="admin token"
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            className="term-input"
-          />
-          <button className="term-btn" disabled={!token || busy}>
-            [open]
-          </button>
-        </form>
+        <LoginForm token={token} busy={busy} onToken={setToken} onOpen={() => run()} />
         {status && (
           <p role="status" className="text-danger">
             {status}
@@ -203,7 +73,6 @@ export default function Admin() {
     );
   }
 
-  const draft = hours ?? data.settings;
   const results = q && found?.q === q ? found : null;
   const tiles: [string, string, number, boolean][] = [
     ["waiting", "waiting", data.pending.length, true],
@@ -267,128 +136,60 @@ export default function Admin() {
       </div>
 
       {q ? (
-        <Card id="search" title={`Words with "${q}"`}>
-          {!results ? (
-            <p className="text-dim">searching...</p>
-          ) : (
-            <div className="space-y-4">
-              <List empty="Ohm doesn't know a word like that.">
-                {results.words.map((w) => (
-                  <WordRow key={w.word} w={w} run={act} busy={busy} />
-                ))}
-              </List>
-              {results.pending.length > 0 && (
-                <div>
-                  <h3 className="font-pixel text-[10px] text-dim">waiting for approval</h3>
-                  <List empty="">
-                    {results.pending.map((p) => (
-                      <PendingRow key={p.word} p={p} run={act} busy={busy} />
-                    ))}
-                  </List>
-                </div>
-              )}
-              {results.blocked.length > 0 && (
-                <div>
-                  <h3 className="font-pixel text-[10px] text-dim">blocked</h3>
-                  <List empty="">
-                    {results.blocked.map((b) => (
-                      <BlockedRow key={b.word} b={b} run={act} busy={busy} />
-                    ))}
-                  </List>
-                </div>
-              )}
-            </div>
-          )}
-        </Card>
+        <SearchResults q={q} results={results} run={act} busy={busy} />
       ) : (
         <div className="grid items-start gap-5 lg:grid-cols-2">
-          <Card id="waiting" title="Waiting for approval" count={data.pending.length}>
+          <AdminCard id="waiting" title="Waiting for approval" count={data.pending.length}>
             <List empty="Nothing waiting.">
               {data.pending.map((p) => (
-                <PendingRow key={p.word} p={p} run={act} busy={busy} />
+                <PendingRow key={p.word} item={p} run={act} busy={busy} />
               ))}
             </List>
-          </Card>
+          </AdminCard>
 
-          <Card id="reports" title="Reports" count={data.reports.length}>
+          <AdminCard id="reports" title="Reports" count={data.reports.length}>
             <List empty="No reports.">
               {data.reports.map((r) => (
-                <ReportRow key={r.id} r={r} run={act} busy={busy} />
+                <ReportRow key={r.id} item={r} run={act} busy={busy} />
               ))}
             </List>
-          </Card>
+          </AdminCard>
 
-          <Card id="battery" title="Battery">
-            <form
-              className="flex flex-wrap items-center gap-x-5 gap-y-2"
-              onSubmit={async (e) => {
-                e.preventDefault();
-                if (await run("settings", draft, "Saved: every open page switched speed")) setHours(null);
+          <AdminCard id="battery" title="Battery">
+            <BatteryForm
+              draft={hours ?? data.settings}
+              dirty={hours !== null}
+              busy={busy}
+              onChange={setHours}
+              onSave={async () => {
+                if (await run("settings", hours ?? data.settings, "Saved: every open page switched speed")) setHours(null);
               }}
-            >
-              <label className="flex items-center gap-2">
-                charge lasts
-                <input
-                  type="number"
-                  min={HOURS_RANGE[0]}
-                  max={HOURS_RANGE[1]}
-                  step={0.5}
-                  value={draft.chargeHours}
-                  onChange={(e) => setHours({ ...draft, chargeHours: Number(e.target.value) })}
-                  className={hoursInput}
-                />
-                h
-              </label>
-              <label className="flex items-center gap-2">
-                mood lasts
-                <input
-                  type="number"
-                  min={HOURS_RANGE[0]}
-                  max={HOURS_RANGE[1]}
-                  step={0.5}
-                  value={draft.moodHours}
-                  onChange={(e) => setHours({ ...draft, moodHours: Number(e.target.value) })}
-                  className={hoursInput}
-                />
-                h
-              </label>
-              <button className="btn" disabled={busy || !hours}>
-                save
-              </button>
-            </form>
-            <p className="mt-2 text-dim">
-              How long a full bar lasts on a normal day ({HOURS_RANGE[0]} to {HOURS_RANGE[1]} h). Night makes it last twice
-              as long; heat and rain shorten it.
-            </p>
-          </Card>
+            />
+          </AdminCard>
 
-          <Card id="words" title="Newest words" count={data.words.length}>
+          <AdminCard id="words" title="Newest words" count={data.words.length}>
             <List empty="Ohm doesn't know any words yet.">
               {data.words.map((w) => (
-                <WordRow key={w.word} w={w} run={act} busy={busy} />
+                <WordRow key={w.word} item={w} run={act} busy={busy} />
               ))}
             </List>
-          </Card>
+          </AdminCard>
 
-          <Card id="blocked" title="Words you blocked" count={data.blocked.length}>
+          <AdminCard id="blocked" title="Words you blocked" count={data.blocked.length}>
             <List empty="None. (block.txt words aren't listed here.)">
               {data.blocked.map((b) => (
-                <BlockedRow key={b.word} b={b} run={act} busy={busy} />
+                <BlockedRow key={b.word} item={b} run={act} busy={busy} />
               ))}
             </List>
-          </Card>
+          </AdminCard>
 
-          <Card id="bans" title="Bans" count={data.bans.length}>
+          <AdminCard id="bans" title="Bans" count={data.bans.length}>
             <List empty="Nobody is banned.">
               {data.bans.map((b) => (
-                <Row key={b.ipHash} word={<code>{b.ipHash}</code>} meta={when(b.at)}>
-                  <button type="button" className={good} disabled={busy} onClick={() => act("unban", { ipHash: b.ipHash }, `Unbanned ${b.ipHash}`)}>
-                    [unban]
-                  </button>
-                </Row>
+                <BanRow key={b.ipHash} item={b} run={act} busy={busy} />
               ))}
             </List>
-          </Card>
+          </AdminCard>
         </div>
       )}
     </main>

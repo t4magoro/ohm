@@ -1,13 +1,13 @@
-import { PixelArt } from "./pixel/PixelArt";
+import { PixelArt } from "../pixel/PixelArt";
+import { BOOK, HEART, LIST, SPEECH } from "../pixel/sprites/icons";
 
 export type Tab = "status" | "chat" | "feed" | "book";
 
-// 7 × 6 icons. Placeholders: redraw them!
 const TABS: { id: Tab; label: string; icon: string[] }[] = [
-  { id: "status", label: "status", icon: [".pp.pp.", "ppppppp", "ppppppp", ".ppppp.", "..ppp..", "...p..."] },
-  { id: "chat", label: "chat", icon: [".wwwww.", "wwwwwww", "wkwkwkw", "wwwwwww", ".ww....", "w......"] },
-  { id: "feed", label: "feed", icon: ["y.yyyyy", ".......", "y.yyyy.", ".......", "y.yyyyy", "......."] },
-  { id: "book", label: "book", icon: [".vvvvvv", "vllllll", "vlVVVVl", "vllllll", "vlVVVll", ".vvvvvv"] },
+  { id: "status", label: "status", icon: HEART },
+  { id: "chat", label: "chat", icon: SPEECH },
+  { id: "feed", label: "feed", icon: LIST },
+  { id: "book", label: "book", icon: BOOK },
 ];
 
 type Props = {

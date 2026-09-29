@@ -1,33 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import { useState, type ReactNode } from "react";
-import { Backdrop, type SkyName } from "@/components/Backdrop";
-import { Chat } from "@/components/Chat";
-import { Device, type DeviceButton } from "@/components/Device";
-import { Feed } from "@/components/Feed";
-import { isOff, Pet } from "@/components/Pet";
-import { BootScreen, CardSkeleton, TermSkeleton } from "@/components/Skeleton";
-import { Spellbook } from "@/components/Spellbook";
-import { StatusCard } from "@/components/StatusCard";
-import { TabBar, type Tab } from "@/components/TabBar";
-import { valueNow, type Weather } from "@/lib/protocol";
-import { useOhm, type Away } from "@/lib/useOhm";
-import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/lib/useShake";
-
-const skyOf = (w: Weather): SkyName => (!w.isDay ? "night" : w.raining ? "rain" : "day");
-
-const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
-
-/** "While you were away, Ohm learned 14 new words and shut down 1 time. …" */
-function awayText(a: Away) {
-  const news = [
-    a.learned > 0 && `learned ${plural(a.learned, "new word")}`,
-    a.shutdowns > 0 && `shut down ${plural(a.shutdowns, "time")}`,
-  ];
-  const said = a.said > 0 ? ` It has used the words you taught ${plural(a.said, "time")} so far.` : "";
-  return `While you were away, Ohm ${news.filter(Boolean).join(" and ")}.${said}`;
-}
+import { Backdrop } from "@/components/pixel/Backdrop";
+import { Device, type DeviceButton } from "@/components/pixel/Device";
+import { AwayBanner } from "@/components/sections/AwayBanner";
+import { Chat } from "@/components/sections/Chat";
+import { Feed } from "@/components/sections/Feed";
+import { Footer } from "@/components/sections/Footer";
+import { Header } from "@/components/sections/Header";
+import { Pet } from "@/components/sections/Pet";
+import { Spellbook } from "@/components/sections/Spellbook";
+import { StatusCard } from "@/components/sections/StatusCard";
+import { BootScreen, CardSkeleton, TermSkeleton } from "@/components/ui/Skeleton";
+import { TabBar, type Tab } from "@/components/ui/TabBar";
+import { Toast } from "@/components/ui/Toast";
+import { useOhm } from "@/hooks/useOhm";
+import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/hooks/useShake";
+import { isOff, skyOf } from "@/lib/ohmState";
+import { valueNow } from "@/lib/protocol";
 
 const nothing = () => {};
 const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot"].map((label) => ({ label, onClick: nothing, disabled: true }));
@@ -97,19 +87,7 @@ export default function Home() {
       <div aria-hidden className="col-start-1 row-span-2 row-start-3 border-t-[3px] border-line bg-screen lg:hidden" />
 
       <div className={COLUMN}>
-        <header className="col-start-1 row-start-1 flex items-center gap-3 px-4 pt-3 lg:p-0">
-          <div>
-            <h1 className="title-outline font-pixel text-3xl font-bold leading-none lg:text-5xl">OHM</h1>
-            <p className="mt-1 hidden text-foreground/80 lg:block">the internet&apos;s robot pet</p>
-          </div>
-          <p className="ml-auto flex items-center gap-1.5 whitespace-nowrap">
-            <span className={`size-2 ${ohm.connected && !ohm.banned ? "bg-mint" : "bg-danger"}`} />
-            {connection}
-          </p>
-          <Link href="/vitals" className="btn">
-            vitals
-          </Link>
-        </header>
+        <Header connected={ohm.connected && !ohm.banned} connection={connection} />
 
         {/* A size container: Ohm's toy grows to fill whatever room is left, on any screen. */}
         <section
@@ -170,58 +148,13 @@ export default function Home() {
         </Panel>
         <Panel show={tab === "book"} scroll className="space-y-4 lg:shrink-0">
           {ready ? <Spellbook brain={ready.brain} /> : <CardSkeleton />}
-          <footer className="space-y-1 text-base text-dim lg:border-[3px] lg:border-line lg:bg-card lg:p-3">
-            <p>
-              Privacy: no accounts. Your browser keeps a random visitor ID and your name. Ohm stores your IP address
-              only as a salted hash, to block spam. The words you teach appear in the feed with your name.
-            </p>
-            <p>
-              Weather by{" "}
-              <a href="https://open-meteo.com/" className="underline">
-                Open-Meteo.com
-              </a>
-              . Word lists:{" "}
-              <a href="https://github.com/hermitdave/FrequencyWords" className="underline">
-                FrequencyWords
-              </a>{" "}
-              (MIT) and{" "}
-              <a href="https://github.com/LDNOOBW/List-of-Dirty-Naughty-Obscene-and-Otherwise-Bad-Words" className="underline">
-                LDNOOBW
-              </a>{" "}
-              (CC BY 4.0).
-            </p>
-          </footer>
+          <Footer />
         </Panel>
       </div>
 
       <TabBar tab={tab} onTab={openTab} dots={dots} className="col-start-1 row-start-4 group-has-[input:focus]/page:hidden lg:hidden" />
-
-      {ohm.away && (
-        // Waits while you type on a phone (typing mode), so it doesn't cover the chat.
-        <div className="term fixed inset-x-3 top-3 z-30 flex items-start gap-2 px-3 py-2 motion-safe:animate-pop motion-reduce:animate-fade max-lg:group-has-[input:focus]/page:hidden lg:left-auto lg:right-6 lg:top-6 lg:w-96">
-          <p className="flex-1">
-            <span className="text-mint">ohm&gt;</span> {awayText(ohm.away)}
-          </p>
-          <button type="button" className="term-btn" onClick={ohm.dismissAway}>
-            [ok]
-          </button>
-        </div>
-      )}
-
-      {/* Messages from Ohm float above everything; on phones just above the tab bar. */}
-      <div
-        role="status"
-        className="pointer-events-none fixed inset-x-0 bottom-[calc(3.5rem+3px+env(safe-area-inset-bottom)+0.75rem)] z-20 flex justify-center px-4 lg:bottom-6"
-      >
-        {ohm.toast && (
-          <p
-            key={ohm.toast.text}
-            className={`term px-3 py-1 motion-safe:animate-rise motion-reduce:animate-fade ${ohm.toast.bad ? "text-danger" : "text-mint"}`}
-          >
-            &gt; {ohm.toast.text}
-          </p>
-        )}
-      </div>
+      {ohm.away && <AwayBanner away={ohm.away} onDismiss={ohm.dismissAway} />}
+      <Toast toast={ohm.toast} />
     </main>
   );
 }

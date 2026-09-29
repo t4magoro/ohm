@@ -1,0 +1,109 @@
+/* Motion: every animation token and its keyframes. Pixel motion jumps frame by frame with steps(),
+   like an LCD pet. Every animation is used with motion-safe: (or has a motion-reduce: fade). */
+@theme {
+  /* A strong ease-out: fast at the start, where the eye is. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+
+  --animate-bob: bob 1s steps(1, end) infinite; /* one pixel (1 of 38); OhmSprite sets the speed from its mood */
+  --animate-hop: hop 360ms steps(3, end); /* when someone charges or plays */
+  --animate-pop: pop 200ms var(--ease-out); /* the speech bubble grows out of its tail */
+  --animate-rise: rise 200ms var(--ease-out); /* new messages */
+  --animate-fade: fade 200ms ease; /* the same, with reduced motion: no movement, only a fade */
+  --animate-blink: blink 1s steps(1, end) infinite;
+  --animate-float: float 900ms steps(6, end) both; /* "ZAP!" rising out of Ohm when someone pokes it */
+
+  /* The sky behind the page (Backdrop.tsx). Slow and far away, so it never competes with Ohm. */
+  --animate-drift: drift 90s linear infinite; /* each cloud sets its own speed */
+  --animate-twinkle: blink 1.6s steps(1, end) infinite;
+  --animate-shoot: shoot 11s linear infinite; /* a shooting star, then a long wait */
+  --animate-fly: fly 32s linear infinite; /* birds cross in 12 s, then 20 s of empty sky */
+  --animate-flap: blink 0.4s steps(1, end) infinite;
+
+  @keyframes bob {
+    50% {
+      transform: translateY(-2.63%);
+    }
+  }
+  @keyframes hop {
+    40% {
+      transform: translateY(-12%);
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+      transform: scale(0.94);
+    }
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+  @keyframes fade {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+  @keyframes float {
+    from {
+      opacity: 0;
+      transform: translateY(40%);
+    }
+    20% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-160%);
+    }
+  }
+  /* From just off the left edge (its own width) to past the right edge. */
+  @keyframes drift {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(100vw);
+    }
+  }
+  @keyframes shoot {
+    from {
+      opacity: 1;
+      transform: translate(0, 0);
+    }
+    7%,
+    to {
+      opacity: 0;
+      transform: translate(-40vw, 22vh);
+    }
+  }
+  @keyframes fly {
+    from {
+      transform: translate(-10vw, 0);
+    }
+    20% {
+      transform: translate(20vw, 2vh);
+    }
+    37.5%,
+    to {
+      transform: translate(110vw, -1vh);
+    }
+  }
+}
+
+/* Rain in Ohm's scene (Sky.tsx): starts one copy up, ends where the next loop starts. */
+@keyframes rain {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

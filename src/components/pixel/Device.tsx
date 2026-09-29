@@ -1,15 +1,13 @@
 import type { ReactNode } from "react";
-import { PixelArt } from "./pixel/PixelArt";
+import { PixelArt } from "./PixelArt";
+import { BUTTON, EGG_STARS } from "./sprites/device";
 
 // The toy Ohm lives in: a Tamagotchi-style egg, 48 × 52 pixels.
 // The screen and the three buttons are HTML laid over the drawing, placed in the same pixels.
 const W = 48;
 const H = 52;
 
-// The egg is worked out, not drawn: a circle stretched taller on top than below.
-// Stars sit on it like stickers. Move them, or add more: [x, y] of each star's middle.
-const STARS = [[10, 5], [36, 6], [4, 22], [43, 27], [5, 38], [42, 40], [23, 49]];
-
+// The egg is worked out, not drawn: a circle stretched taller on top than below, with star stickers.
 function shell() {
   const inside = (x: number, y: number) => {
     const dy = y + 0.5 - 28;
@@ -31,7 +29,7 @@ function shell() {
   fill(7, 9, 40, 35, "V"); // the bezel around the screen
   fill(8, 10, 39, 34, "k");
   fill(9, 11, 38, 33, "."); // the screen itself is HTML
-  for (const [x, y] of STARS) {
+  for (const [x, y] of EGG_STARS) {
     rows[y][x] = "y";
     rows[y - 1][x] = rows[y + 1][x] = rows[y][x - 1] = rows[y][x + 1] = "Y";
   }
@@ -39,7 +37,6 @@ function shell() {
 }
 
 const SHELL = shell();
-const BUTTON = ["..kkkk..", ".kyyyyk.", "kywyyyYk", "kyyyyyYk", "kyyyyyYk", "kyyyyYYk", ".kYYYYk.", "..kkkk.."];
 
 /** Where a piece of HTML goes on the drawing, in shell pixels. */
 const place = (x: number, y: number, w: number, h: number) => ({

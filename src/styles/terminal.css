@@ -1,0 +1,91 @@
+/* Terminal windows (the feed, the chat, every text box) and quiet scrolling. In the components layer,
+   so a Tailwind class like text-dim still wins over them. */
+@layer components {
+  /* A terminal window: the feed, the chat, and every text box. Always dark, like a real screen. */
+  .term {
+    background: var(--color-screen);
+    color: var(--color-text);
+    border: 3px solid var(--line);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+  .term:focus-within {
+    border-color: var(--color-pink);
+  }
+  /* A classic Mac title bar: stripes, a close box on the left, the title in the middle. */
+  .term-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 26px;
+    padding: 5px 6px;
+    border-bottom: 3px solid var(--line);
+    background: repeating-linear-gradient(to bottom, var(--color-edge) 0 2px, transparent 2px 4px) content-box;
+  }
+  .term-bar::before {
+    content: "";
+    position: absolute;
+    left: 12px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-screen);
+    border: 2px solid var(--color-edge);
+    box-shadow: 0 0 0 3px var(--color-screen);
+  }
+  .term-bar > * {
+    background: var(--color-screen);
+    padding: 0 8px;
+    font-family: var(--font-silk);
+    font-size: 11px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .term-input {
+    min-width: 0;
+    flex: 1;
+    background: transparent;
+    color: var(--color-text);
+    outline: none;
+    caret-color: var(--color-pink);
+    caret-shape: block; /* a block cursor where the browser supports it */
+  }
+  /* The terminal's pink border already shows where you're typing. */
+  .term-input:focus-visible {
+    outline: none;
+  }
+  .term-input::placeholder {
+    color: var(--color-dim);
+  }
+  /* A text button inside a terminal: [send] */
+  .term-btn {
+    color: var(--color-pink);
+    padding: 0 0.25rem;
+  }
+  .term-btn:focus-visible {
+    background: var(--color-pink);
+    color: var(--color-screen);
+    outline: none;
+  }
+  /* Hover only with a mouse: on phones a tap would leave it stuck on. */
+  @media (hover: hover) {
+    .term-btn:hover:not(:disabled) {
+      background: var(--color-pink);
+      color: var(--color-screen);
+    }
+  }
+  .term-btn:disabled {
+    opacity: 0.4;
+  }
+
+  /* A scroll area with no scrollbar. It scrolls with a finger, the wheel or the keyboard as usual. */
+  .scroll-quiet {
+    scrollbar-width: none;
+  }
+  .scroll-quiet::-webkit-scrollbar {
+    display: none;
+  }
+  /* Lines fade out at the top edge, which says "there's more above" better than a scrollbar. */
+  .fade-top {
+    mask-image: linear-gradient(to bottom, transparent, #000 2.5rem);
+  }
+}

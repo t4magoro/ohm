@@ -1,0 +1,52 @@
+/* Cards, the outlined title and pixel buttons. In the components layer, so a Tailwind class like
+   text-dim still wins over them. */
+@layer components {
+  /* A dark card with a hard pixel shadow, like the portfolio's windows and an RPG status card. */
+  .card {
+    background: var(--color-card);
+    color: var(--color-text);
+    border: 3px solid var(--line);
+    box-shadow: 6px 6px 0 var(--shadow);
+  }
+
+  /* The title: white pixel outline and a pink drop shadow, like the portfolio's name. */
+  /* Sizes in em, so small text gets a thin outline. Set --drop to change the shadow's color. */
+  .title-outline {
+    --o: clamp(1px, 0.05em, 2px);
+    --n: calc(-1 * var(--o));
+    --d: clamp(2px, 0.1em, 5px);
+    color: var(--color-ink);
+    text-shadow:
+      var(--o) 0 #fff, var(--n) 0 #fff, 0 var(--o) #fff, 0 var(--n) #fff,
+      var(--o) var(--o) #fff, var(--n) var(--n) #fff, var(--o) var(--n) #fff, var(--n) var(--o) #fff,
+      var(--d) var(--d) var(--drop, var(--color-pink));
+  }
+
+  /* The portfolio's notched pixel button with a stepped shadow. Sinks the moment it's pressed. */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    background: #fff;
+    color: var(--color-ink);
+    padding: 0.2rem 0.7rem;
+    font-family: var(--font-silk);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    box-shadow:
+      0 -3px var(--color-ink), 0 3px var(--color-ink), -3px 0 var(--color-ink), 3px 0 var(--color-ink),
+      3px 6px var(--color-ink), 6px 3px var(--color-ink);
+    transition: transform 160ms var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .btn:hover:not(:disabled) {
+      transform: translate(-2px, -2px);
+    }
+  }
+  .btn:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    transition-duration: 60ms;
+  }
+  .btn:disabled {
+    opacity: 0.4;
+  }
+}
