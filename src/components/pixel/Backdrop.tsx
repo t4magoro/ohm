@@ -1,4 +1,5 @@
 import type { SkyName } from "@/lib/ohmState";
+import type { SkyLook } from "@/lib/skyLook";
 import { COLS, LANDSCAPE, ROWS } from "./landscape";
 import { PixelArt } from "./PixelArt";
 import { BIRD_DOWN, BIRD_UP, CLOUD, SHOOTING_STAR, SPARKLE } from "./sprites/scene";
@@ -25,19 +26,26 @@ const STARS: [string, string, string, string][] = [
   ["88%", "32%", "w-2", "0.2s"],
   ["55%", "28%", "w-2", "0.6s"],
 ];
-
-// The same landscape by night or in the rain: darker, greyer.
-const LANDSCAPE_TINT: Record<SkyName, string> = { day: "", rain: "saturate-50 brightness-90", night: "saturate-50 brightness-[0.35]" };
+// How tall each color band of the sky is, top to bottom: hard edges, like a pixel-art sunset.
+const BAND_SIZES = [22, 20, 20, 38];
 
 /**
- * Behind the whole page: drifting clouds and a bird by day, twinkling stars and a shooting star at night,
- * and Bandung's mountains along the ground. Decoration only; everything stands still with reduced motion.
+ * Behind the whole page: the sky's color bands (see lib/skyLook.ts), drifting clouds and a bird by day,
+ * twinkling stars and a shooting star at night, and Bandung's mountains along the ground.
+ * Decoration only; everything stands still with reduced motion.
  * On phones the ground sits just above the bottom console (--console-top, set on <main>).
  */
-export function Backdrop({ sky }: { sky?: SkyName }) {
+export function Backdrop({ sky, look }: { sky?: SkyName; look?: SkyLook }) {
   const night = sky === "night";
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+      {look && (
+        <div className="absolute inset-0 flex flex-col">
+          {look.bands.map((color, i) => (
+            <div key={i} className="transition-colors duration-1000" style={{ backgroundColor: color, flexGrow: BAND_SIZES[i] }} />
+          ))}
+        </div>
+      )}
       {night &&
         STARS.map(([left, top, size, delay]) => (
           <PixelArt
@@ -62,11 +70,12 @@ export function Backdrop({ sky }: { sky?: SkyName }) {
             // Rain clouds hurry across; the static left is where each cloud rests with reduced motion.
             style={{ top, transform: `translateX(${left})`, animationDuration: `${sky === "rain" ? seconds / 2 : seconds}s`, animationDelay: `${delay}s` }}
           >
-            <PixelArt art={CLOUD} className={`${size} ${sky === "rain" ? "brightness-90 grayscale" : ""}`} />
+            {/* Clouds catch the low sun's color; rain clouds are grey. */}
+            <PixelArt art={CLOUD} className={size} style={{ filter: look?.cloud }} />
           </div>
         ))}
 
-      {sky === "day" && (
+      {(sky === "day" || sky === "sunrise") && (
         // A pair of birds crossing now and then, flapping in two frames.
         <div className="absolute left-0 top-[12%] hidden motion-safe:flex motion-safe:animate-fly">
           {[0, 1].map((i) => (
@@ -78,11 +87,13 @@ export function Backdrop({ sky }: { sky?: SkyName }) {
         </div>
       )}
 
+      {/* The same landscape in every light: tinted warm at sunrise and sunset, darker at night. */}
       <svg
         viewBox={`0 0 ${COLS} ${ROWS}`}
         preserveAspectRatio="xMidYMax slice"
         shapeRendering="crispEdges"
-        className={`absolute inset-x-0 bottom-[var(--console-top,0px)] h-[24dvh] w-full transition-[filter] duration-1000 lg:bottom-0 lg:h-[38vh] ${sky ? LANDSCAPE_TINT[sky] : LANDSCAPE_TINT.night}`}
+        className="absolute inset-x-0 bottom-[var(--console-top,0px)] h-[24dvh] w-full transition-[filter] duration-1000 lg:bottom-0 lg:h-[38vh]"
+        style={{ filter: look?.land ?? "saturate(0.5) brightness(0.35)" }}
       >
         {LANDSCAPE.map(([d, color]) => (
           <path key={color} d={d} fill={color} />

@@ -13,6 +13,21 @@
   --line: #141414;
   --shadow: #141414;
 }
+
+/* On the home page Backdrop.tsx draws the sky itself; these set the text colors that go with it. */
+:root:has([data-sky="sunrise"]) {
+  --background: #f6b8c4;
+  --foreground: #141414;
+  --line: #141414;
+  --shadow: #141414;
+}
+:root:has([data-sky="sunset"]) {
+  --background: #3f3d80;
+  --foreground: #fff1e6;
+  --line: #141414;
+  --shadow: #141414;
+}
+
 :root:has([data-sky="rain"]) {
   --background: #7f9db4;
   --foreground: #141414;

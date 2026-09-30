@@ -18,6 +18,7 @@ import { useOhm } from "@/hooks/useOhm";
 import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/hooks/useShake";
 import { isOff, skyOf } from "@/lib/ohmState";
 import { valueNow } from "@/lib/protocol";
+import { skyLook } from "@/lib/skyLook";
 
 const nothing = () => {};
 const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot"].map((label) => ({ label, onClick: nothing, disabled: true }));
@@ -60,9 +61,10 @@ export default function Home() {
   // The build pre-renders this page with no connection, so the first screen is always the skeleton.
   const { pet, weather, brain, now } = ohm;
   const ready = pet && weather && brain && now ? { pet, weather, brain, now } : null;
-  const sky = weather ? skyOf(weather) : undefined;
+  const sky = weather ? skyOf(weather, now) : undefined;
+  const look = weather ? skyLook(weather, now) : undefined;
 
-  // Dots on the phone's tabs: news in the chat or feed while you look elsewhere, or Ohm running low.
+  // What came with the page counts as seen; "while you were away" covers that.
   const newest = { chat: ohm.chat.findLast((i) => i.from === "ohm")?.lineId ?? 0, feed: ohm.feed[0]?.id ?? 0 };
   const openTab = (next: Tab) => {
     // What was on the tab you leave or open counts as seen.
@@ -74,15 +76,15 @@ export default function Home() {
   };
   const dots = {
     status: ready && (off || valueNow(ready.pet.charge, ready.now) < 20) ? ("alert" as const) : undefined,
-    chat: tab !== "chat" && newest.chat > seen.chat ? ("news" as const) : undefined,
-    feed: tab !== "feed" && newest.feed > seen.feed ? ("news" as const) : undefined,
+    chat: tab !== "chat" && newest.chat > Math.max(seen.chat, ohm.loaded.chat) ? ("news" as const) : undefined,
+    feed: tab !== "feed" && newest.feed > Math.max(seen.feed, ohm.loaded.feed) ? ("news" as const) : undefined,  
   };
 
   const connection = ohm.banned ? "banned" : ohm.connected ? `${ohm.online} online` : ready ? "reconnecting..." : "connecting...";
 
   return (
     <main data-sky={sky} className={LAYOUT}>
-      <Backdrop sky={sky} />
+      <Backdrop sky={sky} look={look} />
       {/* The phone's console: dark ground under the panels and the tab bar. */}
       <div aria-hidden className="col-start-1 row-span-2 row-start-3 border-t-[3px] border-line bg-screen lg:hidden" />
 
@@ -99,13 +101,13 @@ export default function Home() {
               pet={ready.pet}
               weather={ready.weather}
               now={ready.now}
-              feed={ohm.feed}
+              poke={ohm.poke}
               chat={ohm.chat}
               unlocked={ohm.unlocked}
               buttons={[
-                { label: "charge", onClick: ohm.charge, disabled: off },
-                { label: "play", onClick: ohm.play, disabled: off },
-                { label: "reboot", onClick: ohm.reboot, disabled: !off },
+                { label: "charge", onClick: ohm.charge, disabled: off || ohm.resting },
+                { label: "play", onClick: ohm.play, disabled: off || ohm.resting },
+                { label: "reboot", onClick: ohm.reboot, disabled: !off || ohm.resting, glow: off },
               ]}
             />
           ) : (
@@ -135,8 +137,13 @@ export default function Home() {
         </Panel>
         <Panel show={tab === "chat"} className="lg:flex-1">
           {ready ? (
-            <Chat items={ohm.chat} disabled={off} name={ohm.name} onSay={ohm.say} onReport={ohm.report} onRename={ohm.rename} />
-          ) : (
+            <Chat items={ohm.chat} 
+                  disabled={off} 
+                  wait={ohm.sayWait} 
+                  name={ohm.name} 
+                  onSay={ohm.say} 
+                  onReport={ohm.report} 
+                  onRename={ohm.rename} />) : (
             <TermSkeleton title="talk to ohm" />
           )}
         </Panel>
