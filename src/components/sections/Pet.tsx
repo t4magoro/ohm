@@ -7,9 +7,10 @@ import { OhmSprite } from "../pixel/OhmSprite";
 import { PixelArt } from "../pixel/PixelArt";
 import { Sky } from "../pixel/Sky";
 import { BUBBLE_TAIL } from "../pixel/sprites/device";
+import { HEART } from "../pixel/sprites/icons";
 import { StatusBar } from "../pixel/StatusBar";
 
-const REACTION_MS = 2_000; // a poke younger than this still shows its "ZAP!"
+const REACTION_MS = 2_000; // a poke younger than this still shows its "ZAP!" (or a pat's heart)
 
 type Props = {
   pet: PetState;
@@ -44,16 +45,19 @@ export function Pet({ pet, weather, now, poke, chat, unlocked, buttons }: Props)
               <div key={poke?.key} className="relative h-[92%] motion-safe:animate-hop">
                 <OhmSprite face={face} parts={unlocked} className="h-full w-auto" />
               </div>
-              {fresh && (
-                <p
-                  key={`zap-${fresh.key}`} // not just the key: the hop above already uses it
-                  aria-hidden
-                  className={`title-outline absolute top-[6%] hidden font-pixel text-lg font-bold motion-safe:block motion-safe:animate-float ${fresh.type === "charge" ? "[--drop:var(--color-lemon)]" : ""}`}
-                >
-                  {fresh.type === "charge" ? "ZAP!" : "YAY!"}
-                </p>
-              )}
-            </div>
+              {fresh?.type === "pat" ? (
+                <PixelArt key={`love-${fresh.key}`} art={HEART} className="absolute top-[10%] hidden w-[9%] motion-safe:block motion-safe:animate-float" />
+              ) : (
+                fresh && (
+                  <p
+                    key={`zap-${fresh.key}`} // not just the key: the hop above already uses it
+                    aria-hidden
+                    className={`title-outline absolute top-[6%] hidden font-pixel text-lg font-bold motion-safe:block motion-safe:animate-float ${fresh.type === "charge" ? "[--drop:var(--color-lemon)]" : ""}`}
+                  >
+                    {fresh.type === "charge" ? "ZAP!" : "YAY!"}
+                  </p>
+                )
+              )}            </div>
           </div>
         }
       />

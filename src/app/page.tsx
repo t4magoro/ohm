@@ -137,13 +137,18 @@ export default function Home() {
         </Panel>
         <Panel show={tab === "chat"} className="lg:flex-1">
           {ready ? (
-            <Chat items={ohm.chat} 
-                  disabled={off} 
-                  wait={ohm.sayWait} 
-                  name={ohm.name} 
-                  onSay={ohm.say} 
-                  onReport={ohm.report} 
-                  onRename={ohm.rename} />) : (
+            <Chat
+              items={ohm.chat}
+              disabled={off}
+              wait={ohm.sayWait}
+              name={ohm.name}
+              votes={ohm.votes}
+              onSay={ohm.say}
+              onRate={ohm.rate}
+              onReport={ohm.report}
+              onRename={ohm.rename}
+            />
+          ) : (
             <TermSkeleton title="talk to ohm" />
           )}
         </Panel>
