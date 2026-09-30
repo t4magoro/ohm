@@ -1,13 +1,13 @@
 import { WEATHER_TEXT } from "@/content/weather";
-import { hours, plural } from "@/lib/format";
+import { hours } from "@/lib/format";
 import { statusEffects } from "@/lib/ohmState";
-import { valueNow, type Brain, type Pet, type Weather } from "@/lib/protocol";
+import { valueNow, type Pet, type Weather } from "@/lib/protocol";
 import { StatBar } from "../ui/StatBar";
 
-type Props = { pet: Pet; weather: Weather; brain: Brain; now: number; off: boolean };
+type Props = { pet: Pet; weather: Weather; now: number; off: boolean };
 
 /** Ohm's stats, like a character card in an RPG: name line, bars, numbers and status effects. */
-export function StatusCard({ pet, weather, brain, now, off }: Props) {
+export function StatusCard({ pet, weather, now, off }: Props) {
   const alive = off ? 0 : now - pet.bornAt;
   const stats: [string, string][] = [
     ["life", `#${pet.life}`],
@@ -19,7 +19,7 @@ export function StatusCard({ pet, weather, brain, now, off }: Props) {
   return (
     <section className="card space-y-3 p-3">
       <h2 className="font-pixel text-sm font-bold">
-        Ohm <span className="text-lemon">{`{${plural(brain.vocab, "word")}}`}</span>{" "}
+        Ohm{" "}
         <span className={off ? "text-danger" : "text-pink"}>{off ? "{POWERED OFF}" : "{ROBOT PET}"}</span>
       </h2>
       <StatBar label="charge" value={valueNow(pet.charge, now)} color="bg-lemon" alarm />
