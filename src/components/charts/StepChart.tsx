@@ -1,9 +1,11 @@
 import { Axes, DataTable, H, LEFT, PLOT_H, PLOT_W, TOP, W } from "./ChartFrame";
+import type { ReactNode } from "react";
 
 export type Series = { name: string; color: string; values: number[] };
 
 type Props = {
   title: string;
+  actions?: ReactNode; // buttons on the right of the title, e.g. a view switch
   xs: number[]; // shared by every series: one value per x
   series: Series[];
   from: number;
@@ -16,7 +18,7 @@ type Props = {
 };
 
 /** A line over time that holds each value until the next one, like a pixel staircase. */
-export function StepChart({ title, xs, series, from, to, step, yMax, ticks, fmtX, fmtY }: Props) {
+export function StepChart({ title, actions, xs, series, from, to, step, yMax, ticks, fmtX, fmtY }: Props) {
   const px = (x: number) => LEFT + ((x - from) / (to - from)) * PLOT_W;
   const py = (y: number) => TOP + PLOT_H - (Math.min(y, yMax) / yMax) * PLOT_H;
   const path = (values: number[]) =>
@@ -28,9 +30,12 @@ export function StepChart({ title, xs, series, from, to, step, yMax, ticks, fmtX
 
   return (
     <figure className="card space-y-2 p-3">
-      <figcaption className="font-pixel text-xs font-bold">{title}</figcaption>
+      <div className="flex items-center gap-2">
+        <figcaption className="font-pixel text-xs font-bold">{title}</figcaption>
+        {actions}
+      </div>
       {series.length > 1 && (
-        <ul className="flex gap-4 text-base">
+        <ul className="flex flex-wrap gap-x-4 text-base">
           {series.map((s) => (
             <li key={s.name} className="flex items-center gap-1">
               <svg width="14" height="4" aria-hidden>

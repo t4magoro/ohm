@@ -12,6 +12,8 @@ import { Milestones } from "@/components/vitals/Milestones";
 import { TopWords } from "@/components/vitals/TopWords";
 import { dayAndMonth, dayAndTime, percent, weekday, whole } from "@/lib/format";
 import type { Vitals } from "@/lib/protocol";
+import { Understands } from "@/components/vitals/Understands";
+import { SkillsCard } from "@/components/vitals/SkillsCard";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "";
 const HOUR = 3_600_000;
@@ -72,7 +74,8 @@ export default function VitalsPage() {
         <>
           <Milestones progress={data.milestones} now={data.now} />
           <Spellbook brain={data.brain} />
-
+          <SkillsCard snapshots={data.snapshots} skills={data.brain.skills} now={data.now} ticks={dayTicks(data.now)} />
+          <Understands links={data.links} />
           {data.snapshots.length === 0 ? (
             <p className="card p-3 text-dim">No hourly readings yet: Ohm writes one down every hour.</p>
           ) : (
