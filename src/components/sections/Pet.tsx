@@ -1,17 +1,15 @@
 import type { ChatItem } from "@/hooks/useOhm";
-import { faceOf } from "@/lib/ohmState";
+import { faceOf, skyOf } from "@/lib/ohmState";
 import type { FeedEvent, MilestoneId, Pet as PetState, Weather } from "@/lib/protocol";
+import { skyLook } from "@/lib/skyLook";
 import { Device, type DeviceButton } from "../pixel/Device";
 import { OhmSprite } from "../pixel/OhmSprite";
 import { PixelArt } from "../pixel/PixelArt";
 import { Sky } from "../pixel/Sky";
 import { BUBBLE_TAIL } from "../pixel/sprites/device";
+import { StatusBar } from "../pixel/StatusBar";
 
 const REACTION_MS = 2_000; // a poke younger than this still shows its "ZAP!"
-
-// The screen follows Bandung's weather too, in light colors so Ohm's black outline always shows.
-const sceneColor = (w: Weather) =>
-  !w.isDay ? "bg-[#cdd5f3]" : w.raining ? "bg-[#dfe7ef]" : w.tempC > 30 ? "bg-[#ffe2c4]" : "bg-[#fff8e7]";
 
 type Props = {
   pet: PetState;
@@ -38,21 +36,25 @@ export function Pet({ pet, weather, now, feed, chat, unlocked, buttons }: Props)
       <Device
         buttons={buttons}
         screen={
-          <div className={`relative flex size-full items-end justify-center ${sceneColor(weather)}`}>
-            <Sky weather={weather} />
-            {/* Remounts on every charge or play, so Ohm hops when someone pokes it. */}
-            <div key={poke?.id} className="relative h-[92%] motion-safe:animate-hop">
-              <OhmSprite face={face} parts={unlocked} className="h-full w-auto" />
+          // The screen follows Bandung's sky too, in light colors so Ohm's black outline always shows.
+          <div className="flex size-full flex-col transition-colors duration-1000" style={{ backgroundColor: skyLook(weather, now).screen }}>
+            <StatusBar sky={skyOf(weather, now)} now={now} />
+            <div className="relative flex min-h-0 flex-1 items-end justify-center overflow-hidden">
+              <Sky weather={weather} now={now} />
+              {/* Remounts on every charge or play, so Ohm hops when someone pokes it. */}
+              <div key={poke?.id} className="relative h-[92%] motion-safe:animate-hop">
+                <OhmSprite face={face} parts={unlocked} className="h-full w-auto" />
+              </div>
+              {fresh && (
+                <p
+                  key={`zap-${fresh.id}`} // not just the id: the hop above already uses it as a key
+                  aria-hidden
+                  className={`title-outline absolute top-[6%] hidden font-pixel text-lg font-bold motion-safe:block motion-safe:animate-float ${fresh.type === "charge" ? "[--drop:var(--color-lemon)]" : ""}`}
+                >
+                  {fresh.type === "charge" ? "ZAP!" : "YAY!"}
+                </p>
+              )}
             </div>
-            {fresh && (
-              <p
-                key={`zap-${fresh.id}`} // not just the id: the hop above already uses it as a key
-                aria-hidden
-                className={`title-outline absolute top-[6%] hidden font-pixel text-lg font-bold motion-safe:block motion-safe:animate-float ${fresh.type === "charge" ? "[--drop:var(--color-lemon)]" : ""}`}
-              >
-                {fresh.type === "charge" ? "ZAP!" : "YAY!"}
-              </p>
-            )}
           </div>
         }
       />

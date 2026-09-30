@@ -18,6 +18,7 @@ import { useOhm } from "@/hooks/useOhm";
 import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/hooks/useShake";
 import { isOff, skyOf } from "@/lib/ohmState";
 import { valueNow } from "@/lib/protocol";
+import { skyLook } from "@/lib/skyLook";
 
 const nothing = () => {};
 const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot"].map((label) => ({ label, onClick: nothing, disabled: true }));
@@ -60,7 +61,8 @@ export default function Home() {
   // The build pre-renders this page with no connection, so the first screen is always the skeleton.
   const { pet, weather, brain, now } = ohm;
   const ready = pet && weather && brain && now ? { pet, weather, brain, now } : null;
-  const sky = weather ? skyOf(weather) : undefined;
+    const sky = weather ? skyOf(weather, now) : undefined;
+  const look = weather ? skyLook(weather, now) : undefined;
 
   // Dots on the phone's tabs: news in the chat or feed while you look elsewhere, or Ohm running low.
   const newest = { chat: ohm.chat.findLast((i) => i.from === "ohm")?.lineId ?? 0, feed: ohm.feed[0]?.id ?? 0 };
@@ -82,7 +84,7 @@ export default function Home() {
 
   return (
     <main data-sky={sky} className={LAYOUT}>
-      <Backdrop sky={sky} />
+      <Backdrop sky={sky} look={look} />
       {/* The phone's console: dark ground under the panels and the tab bar. */}
       <div aria-hidden className="col-start-1 row-span-2 row-start-3 border-t-[3px] border-line bg-screen lg:hidden" />
 
