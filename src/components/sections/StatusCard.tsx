@@ -1,7 +1,7 @@
 import { WEATHER_TEXT } from "@/content/weather";
-import { hours } from "@/lib/format";
+import { hours, plural } from "@/lib/format";
 import { statusEffects } from "@/lib/ohmState";
-import type { Brain, Pet, Weather } from "@/lib/protocol";
+import { valueNow, type Brain, type Pet, type Weather } from "@/lib/protocol";
 import { StatBar } from "../ui/StatBar";
 
 type Props = { pet: Pet; weather: Weather; brain: Brain; now: number; off: boolean };
@@ -19,11 +19,11 @@ export function StatusCard({ pet, weather, brain, now, off }: Props) {
   return (
     <section className="card space-y-3 p-3">
       <h2 className="font-pixel text-sm font-bold">
-        Ohm <span className="text-lemon">{`{LV${brain.level}}`}</span>{" "}
+        Ohm <span className="text-lemon">{`{${plural(brain.vocab, "word")}}`}</span>{" "}
         <span className={off ? "text-danger" : "text-pink"}>{off ? "{POWERED OFF}" : "{ROBOT PET}"}</span>
       </h2>
-      <StatBar label="charge" stat={pet.charge} now={now} color="bg-lemon" />
-      <StatBar label="mood" stat={pet.mood} now={now} color="bg-pink" />
+      <StatBar label="charge" value={valueNow(pet.charge, now)} color="bg-lemon" alarm />
+      <StatBar label="mood" value={valueNow(pet.mood, now)} color="bg-pink" alarm />
       <dl className="grid grid-cols-4 gap-1.5 text-center">
         {stats.map(([label, value]) => (
           <div key={label} className="bg-screen py-1.5">

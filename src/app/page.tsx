@@ -40,9 +40,9 @@ const LAYOUT =
 const COLUMN = "contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5";
 
 /** One panel of the console. On phones only the chosen one shows; on desktop they all do. */
-function Panel({ show, scroll, className = "", children }: { show: boolean; scroll?: boolean; className?: string; children: ReactNode }) {
-  const scrolls = scroll ? "scroll-quiet overflow-y-auto overscroll-contain lg:overflow-visible" : "";
-  return (
+function Panel({ show, scroll, className = "", children }: { show: boolean; scroll?: boolean | "always"; className?: string; children: ReactNode }) {
+  const desktop = scroll === "always" ? "lg:-mr-1.5 lg:min-h-0 lg:pb-1.5 lg:pr-1.5" : "lg:overflow-visible";
+  const scrolls = scroll ? `scroll-quiet overflow-y-auto overscroll-contain ${desktop}` : "";  return (
     <div className={`col-start-1 row-start-3 min-h-0 px-3 pb-3 pt-4 lg:p-0 ${scrolls} ${show ? "" : "max-lg:hidden"} ${className}`}>
       {children}
     </div>
@@ -153,7 +153,7 @@ export default function Home() {
         <Panel show={tab === "feed"} className="lg:min-h-48 lg:flex-1">
           {ready ? <Feed events={ohm.feed} now={ready.now} /> : <TermSkeleton title="live feed" />}
         </Panel>
-        <Panel show={tab === "book"} scroll className="space-y-4 lg:shrink-0">
+          <Panel show={tab === "book"} scroll="always" className="space-y-4">
           {ready ? <Spellbook brain={ready.brain} /> : <CardSkeleton />}
           <Footer />
         </Panel>
