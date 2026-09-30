@@ -6,5 +6,9 @@ export const CHAT_NOTE =
 
 export const EMPTY_CHAT = "# no messages yet. say hi below, Ohm answers here.";
 
+/** Under Ohm's reply to your latest message (RatePrompt.tsx). A rating only moves Ohm's Expression skill. */
+export const RATE_ASK = "was that right?";
+export const RATE_THANKS = "thanks! that counts toward Ohm's expression";
+
 /** Must match cleanName in protocol.ts. */
 export const NAME_RULE = "! 2-16 letters, numbers, spaces, - or _";

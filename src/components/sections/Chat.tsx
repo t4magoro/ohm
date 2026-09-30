@@ -1,25 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { CHAT_NOTE, EMPTY_CHAT } from "@/content/chat";
 import type { ChatItem } from "@/hooks/useOhm";
 import { MAX_SAY } from "@/lib/protocol";
 import { Log } from "../ui/Log";
+import { RatePrompt } from "./RatePrompt";
 import { WhoAmI } from "./WhoAmI";
 
 type Props = {
   items: ChatItem[];
   disabled: boolean;
-  wait : number,
+  /** Seconds until the server takes another message, 0 = now. */
+  wait: number;
   name: string;
+  /** Your pats (true) and frowns (false), by line id. */
+  votes: Record<number, boolean>;
   onSay: (text: string) => void;
+  onRate: (lineId: number, pat: boolean) => void;
   onReport: (lineId: number) => void;
   onRename: (name: string) => void;
 };
 
 /** Talking to Ohm, as a terminal: your name on top, the conversation, then `$` and your message. */
-export function Chat({ items, disabled, wait, name, onSay, onReport, onRename }: Props) {
+export function Chat({ items, disabled, wait, name, votes, onSay, onRate, onReport, onRename }: Props) {
   const [text, setText] = useState("");
+
+  // Ohm asks back under its reply to your latest message. Your messages are never stored,
+  // so replies from before this visit (the history) never get the question.
+  const lastYou = items.findLastIndex((i) => i.from === "you");
+  const reply = lastYou < 0 ? undefined : items.slice(lastYou).find((i) => i.from === "ohm" && i.to === name);
 
   return (
     <section className="term flex h-full flex-col">
@@ -38,18 +48,21 @@ export function Chat({ items, disabled, wait, name, onSay, onReport, onRename }:
                 <span className="text-pink">$</span> {item.text}
               </li>
             ) : (
-              <li key={item.key}>
-                <span className="text-mint">ohm&gt;</span> {item.text} <span className="text-dim">@{item.to}</span>{" "}
-                <button
-                  type="button"
-                  className="term-btn text-base text-dim hover:text-screen focus-visible:text-screen"
-                  aria-label="Report this line"
-                  title="Report this line"
-                  onClick={() => onReport(item.lineId!)}
-                >
-                  [report]
-                </button>
-              </li>
+              <Fragment key={item.key}>
+                <li>
+                  <span className="text-mint">ohm&gt;</span> {item.text} <span className="text-dim">@{item.to}</span>{" "}
+                  <button
+                    type="button"
+                    className="term-btn text-base text-dim hover:text-screen focus-visible:text-screen"
+                    aria-label="Report this line"
+                    title="Report this line"
+                    onClick={() => onReport(item.lineId!)}
+                  >
+                    [report]
+                  </button>
+                </li>
+                {item === reply && <RatePrompt vote={votes[item.lineId!]} onRate={(pat) => onRate(item.lineId!, pat)} />}
+              </Fragment>
             ),
           )}
         </ul>

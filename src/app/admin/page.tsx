@@ -8,6 +8,7 @@ import { BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/
 import { SearchResults } from "@/components/admin/SearchResults";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { adminApi } from "@/lib/adminApi";
+import { ResetForm } from "@/components/admin/ResetForm";
 import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
 
 export default function Admin() {
@@ -189,6 +190,9 @@ export default function Admin() {
                 <BanRow key={b.ipHash} item={b} run={act} busy={busy} />
               ))}
             </List>
+          </AdminCard>
+          <AdminCard id="reset" title="Reset Ohm's brain">
+            <ResetForm busy={busy} onReset={() => run("reset", { confirm: "RESET" }, "Ohm's brain was reset: it learns from zero again")} />
           </AdminCard>
         </div>
       )}

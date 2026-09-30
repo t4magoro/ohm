@@ -26,7 +26,16 @@ export type ChatItem = { key: string; from: "you" | "ohm"; text: string; to?: st
 export type Away = Extract<ServerMsg, { t: "away" }>;
 
 /** The newest charge or play Ohm reacts to: yours the moment you press, others' when the server tells us. */
-export type Poke = { key: string; type: "charge" | "play"; at: number };
+export type Poke = { key: string; type: "charge" | "play" | "pat"; at: number };
+// Your ratings, remembered per browser so the buttons stay hidden after a reload. The server is the source of truth.
+const RATED_KEY = "ohm-rated";
+function savedVotes(): Record<number, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(RATED_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
 
 const ohmSaid = (l: Line): ChatItem => ({ key: `ohm-${l.id}`, from: "ohm", text: l.text, to: l.to, lineId: l.id });
 
@@ -64,6 +73,7 @@ export function useOhm() {
   const [name, setName] = useState("");
   const [deviceNow, setDeviceNow] = useState(0);
   const [poke, setPoke] = useState<Poke | null>(null);
+  const [votes, setVotes] = useState<Record<number, boolean>>({}); // your pats and frowns, by line id
   const [loaded, setLoaded] = useState({ chat: 0, feed: 0 }); // the newest line that came with the history
   const [careUntil, setCareUntil] = useState(0); // device time when charge, play and reboot work again
   const [sayUntil, setSayUntil] = useState(0); // device time when you may chat again
@@ -92,6 +102,7 @@ export function useOhm() {
         retry = 0;
         setConnected(true);
         setName(me.current.name);
+        setVotes(savedVotes());
         socket.send(JSON.stringify({ t: "hello", ...me.current, ...(lastSeen ? { lastSeen } : {}) } satisfies ClientMsg));
         lastSeen = 0;
         if (firstVisit) setAway("first");
@@ -213,6 +224,18 @@ export function useOhm() {
     navigator.vibrate?.(10); // a tiny buzz where phones support it (Android); iPhones ignore it
     if (t !== "reboot") setPoke({ key: `me-${Date.now()}`, type: t, at: Date.now() + offset });
   };
+  // Pat or frown at Ohm's reply to you. It only moves Ohm's Expression skill; the server takes one vote per line.
+  const rate = (lineId: number, pat: boolean) => {
+    if (lineId in votes || !send({ t: "rate", lineId, pat })) return;
+    const next = { ...votes, [lineId]: pat };
+    setVotes(next);
+    try {
+      localStorage.setItem(RATED_KEY, JSON.stringify(Object.fromEntries(Object.entries(next).slice(-50)))); // the newest 50
+    } catch {
+      // storage blocked: the buttons come back after a reload, and the server refuses a second vote
+    }
+    if (pat) setPoke({ key: `pat-${lineId}`, type: "pat", at: Date.now() + offset }); // Ohm hops, with a heart
+  };
 
   return {
     pet,
@@ -241,6 +264,8 @@ export function useOhm() {
     report: (lineId: number) => send({ t: "report", lineId }),
     rename,
     say,
+    votes,
+    rate,
     dismissAway: () => setAway(null),
   };
 }
