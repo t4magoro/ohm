@@ -61,10 +61,10 @@ export default function Home() {
   // The build pre-renders this page with no connection, so the first screen is always the skeleton.
   const { pet, weather, brain, now } = ohm;
   const ready = pet && weather && brain && now ? { pet, weather, brain, now } : null;
-    const sky = weather ? skyOf(weather, now) : undefined;
+  const sky = weather ? skyOf(weather, now) : undefined;
   const look = weather ? skyLook(weather, now) : undefined;
 
-  // Dots on the phone's tabs: news in the chat or feed while you look elsewhere, or Ohm running low.
+  // What came with the page counts as seen; "while you were away" covers that.
   const newest = { chat: ohm.chat.findLast((i) => i.from === "ohm")?.lineId ?? 0, feed: ohm.feed[0]?.id ?? 0 };
   const openTab = (next: Tab) => {
     // What was on the tab you leave or open counts as seen.
@@ -76,8 +76,8 @@ export default function Home() {
   };
   const dots = {
     status: ready && (off || valueNow(ready.pet.charge, ready.now) < 20) ? ("alert" as const) : undefined,
-    chat: tab !== "chat" && newest.chat > seen.chat ? ("news" as const) : undefined,
-    feed: tab !== "feed" && newest.feed > seen.feed ? ("news" as const) : undefined,
+    chat: tab !== "chat" && newest.chat > Math.max(seen.chat, ohm.loaded.chat) ? ("news" as const) : undefined,
+    feed: tab !== "feed" && newest.feed > Math.max(seen.feed, ohm.loaded.feed) ? ("news" as const) : undefined,  
   };
 
   const connection = ohm.banned ? "banned" : ohm.connected ? `${ohm.online} online` : ready ? "reconnecting..." : "connecting...";
@@ -101,13 +101,13 @@ export default function Home() {
               pet={ready.pet}
               weather={ready.weather}
               now={ready.now}
-              feed={ohm.feed}
+              poke={ohm.poke}
               chat={ohm.chat}
               unlocked={ohm.unlocked}
               buttons={[
-                { label: "charge", onClick: ohm.charge, disabled: off },
-                { label: "play", onClick: ohm.play, disabled: off },
-                { label: "reboot", onClick: ohm.reboot, disabled: !off },
+                { label: "charge", onClick: ohm.charge, disabled: off || ohm.resting },
+                { label: "play", onClick: ohm.play, disabled: off || ohm.resting },
+                { label: "reboot", onClick: ohm.reboot, disabled: !off || ohm.resting, glow: off },
               ]}
             />
           ) : (
@@ -137,8 +137,13 @@ export default function Home() {
         </Panel>
         <Panel show={tab === "chat"} className="lg:flex-1">
           {ready ? (
-            <Chat items={ohm.chat} disabled={off} name={ohm.name} onSay={ohm.say} onReport={ohm.report} onRename={ohm.rename} />
-          ) : (
+            <Chat items={ohm.chat} 
+                  disabled={off} 
+                  wait={ohm.sayWait} 
+                  name={ohm.name} 
+                  onSay={ohm.say} 
+                  onReport={ohm.report} 
+                  onRename={ohm.rename} />) : (
             <TermSkeleton title="talk to ohm" />
           )}
         </Panel>

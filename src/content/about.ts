@@ -1,4 +1,8 @@
-// The footer: what Ohm keeps about you, and whose data it uses.
+// About Ohm: the welcome for first-time visitors, and the footer (what Ohm keeps about you, whose data it uses).
+
+/** Shown once, in the banner at the top, when your browser has no visit on record. */
+export const WELCOME =
+  "Hi! I'm Ohm, one robot pet shared by everyone online. Charge me, play with me, and talk to me: I learn to speak from the words you type.";
 
 export const PRIVACY =
   "Privacy: no accounts. Your browser keeps a random visitor ID and your name. Ohm stores your IP address only as a salted hash, to block spam. The words you teach appear in the feed with your name.";

@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BANNED,
+  CARE_GAP_MS,
+  SAY_GAP_MS,
   type Brain,
   type ClientMsg,
   type FeedEvent,
@@ -22,6 +24,9 @@ export type ChatItem = { key: string; from: "you" | "ohm"; text: string; to?: st
 
 /** "While you were away": what happened since your last visit. */
 export type Away = Extract<ServerMsg, { t: "away" }>;
+
+/** The newest charge or play Ohm reacts to: yours the moment you press, others' when the server tells us. */
+export type Poke = { key: string; type: "charge" | "play"; at: number };
 
 const ohmSaid = (l: Line): ChatItem => ({ key: `ohm-${l.id}`, from: "ohm", text: l.text, to: l.to, lineId: l.id });
 
@@ -49,7 +54,7 @@ export function useOhm() {
   const [weather, setWeather] = useState<Weather | null>(null);
   const [brain, setBrain] = useState<Brain | null>(null);
   const [unlocked, setUnlocked] = useState<MilestoneId[]>([]);
-  const [away, setAway] = useState<Away | null>(null);
+  const [away, setAway] = useState<Away | "first" | null>(null); // "first": no visit on record yet
   const [online, setOnline] = useState(0);
   const [feed, setFeed] = useState<FeedEvent[]>([]);
   const [chat, setChat] = useState<ChatItem[]>([]);
@@ -58,6 +63,10 @@ export function useOhm() {
   const [toast, setToast] = useState<{ text: string; bad: boolean } | null>(null);
   const [name, setName] = useState("");
   const [deviceNow, setDeviceNow] = useState(0);
+  const [poke, setPoke] = useState<Poke | null>(null);
+  const [loaded, setLoaded] = useState({ chat: 0, feed: 0 }); // the newest line that came with the history
+  const [careUntil, setCareUntil] = useState(0); // device time when charge, play and reboot work again
+  const [sayUntil, setSayUntil] = useState(0); // device time when you may chat again
   const [offset, setOffset] = useState(0); // server clock − this device's clock
   const ws = useRef<WebSocket | null>(null);
   const me = useRef({ id: "", name: "" });
@@ -71,6 +80,7 @@ export function useOhm() {
     } catch {
       // storage blocked: no "while you were away"
     }
+    let firstVisit = !lastSeen; // the banner says what Ohm is instead, once
     let retry = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let stopped = false;
@@ -84,6 +94,8 @@ export function useOhm() {
         setName(me.current.name);
         socket.send(JSON.stringify({ t: "hello", ...me.current, ...(lastSeen ? { lastSeen } : {}) } satisfies ClientMsg));
         lastSeen = 0;
+        if (firstVisit) setAway("first");
+        firstVisit = false;
       };
       socket.onmessage = (ev) => {
         const msg = JSON.parse(ev.data as string) as ServerMsg;
@@ -95,10 +107,21 @@ export function useOhm() {
           setOffset(msg.now - Date.now());
         } else if (msg.t === "away") setAway(msg);
         else if (msg.t === "online") setOnline(msg.online);
-        else if (msg.t === "feed") setFeed(msg.events);
-        else if (msg.t === "event") setFeed((f) => [msg.e, ...f].slice(0, FEED_SIZE));
-        else if (msg.t === "lines") setChat(msg.lines.map(ohmSaid));
-        else if (msg.t === "line") setChat((c) => [...c, ohmSaid(msg.line)].slice(-CHAT_SIZE));
+        else if (msg.t === "feed") {
+          setFeed(msg.events);
+          setLoaded((l) => ({ ...l, feed: msg.events[0]?.id ?? 0 }));
+        } else if (msg.t === "event") {
+          setFeed((f) => [msg.e, ...f].slice(0, FEED_SIZE));
+          const e = msg.e;
+          // Your own charge made Ohm react when you pressed, so the server's echo of it is skipped.
+          // ponytail: matched by name, so someone with your exact name won't make Ohm hop for you.
+          if ((e.type === "charge" || e.type === "play") && e.name !== me.current.name) {
+            setPoke({ key: `e-${e.id}`, type: e.type, at: e.at });
+          }
+        } else if (msg.t === "lines") {
+          setChat(msg.lines.map(ohmSaid));
+          setLoaded((l) => ({ ...l, chat: msg.lines.at(-1)?.id ?? 0 }));
+        } else if (msg.t === "line") setChat((c) => [...c, ohmSaid(msg.line)].slice(-CHAT_SIZE));
         else if (msg.t === "unsay") setChat((c) => c.filter((item) => item.lineId !== msg.id));
         else if (msg.t === "notice") setToast({ text: msg.msg, bad: false });
         else if (msg.t === "error") setToast({ text: msg.msg, bad: true });
@@ -174,11 +197,22 @@ export function useOhm() {
 
   const say = useCallback(
     (text: string) => {
+      if (Date.now() < sayUntil || !send({ t: "say", text })) return;
+      setSayUntil(Date.now() + SAY_GAP_MS);
       // Your own message is shown only here: the server never sends it to anyone else.
-      if (send({ t: "say", text })) setChat((c) => [...c, { key: `you-${Date.now()}`, from: "you" as const, text }].slice(-CHAT_SIZE));
+      setChat((c) => [...c, { key: `you-${Date.now()}`, from: "you" as const, text }].slice(-CHAT_SIZE));
     },
-    [send],
+    [send, sayUntil],
   );
+
+  // Charge, play and reboot share one cooldown on the server. The buttons wait it out here, so nobody
+  // runs into an error, and Ohm reacts the moment you press instead of when the server answers.
+  const care = (t: "charge" | "play" | "reboot") => {
+    if (Date.now() < careUntil || !send({ t })) return;
+    setCareUntil(Date.now() + CARE_GAP_MS);
+    navigator.vibrate?.(10); // a tiny buzz where phones support it (Android); iPhones ignore it
+    if (t !== "reboot") setPoke({ key: `me-${Date.now()}`, type: t, at: Date.now() + offset });
+  };
 
   return {
     pet,
@@ -195,9 +229,15 @@ export function useOhm() {
     name,
     /** Server time, updated every second. 0 until the first tick. */
     now: deviceNow ? deviceNow + offset : 0,
-    charge: () => send({ t: "charge" }),
-    play: () => send({ t: "play" }),
-    reboot: () => send({ t: "reboot" }),
+    poke,
+    loaded,
+    /** True for a few seconds after a charge, play or reboot: the server wouldn't take another one yet. */
+    resting: deviceNow < careUntil,
+    /** Seconds until you may chat again, 0 = now. */
+    sayWait: Math.min(SAY_GAP_MS / 1000, Math.max(0, Math.ceil((sayUntil - deviceNow) / 1000))),
+    charge: () => care("charge"),
+    play: () => care("play"),
+    reboot: () => care("reboot"),
     report: (lineId: number) => send({ t: "report", lineId }),
     rename,
     say,

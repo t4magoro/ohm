@@ -10,6 +10,7 @@ import { WhoAmI } from "./WhoAmI";
 type Props = {
   items: ChatItem[];
   disabled: boolean;
+  wait : number,
   name: string;
   onSay: (text: string) => void;
   onReport: (lineId: number) => void;
@@ -17,7 +18,7 @@ type Props = {
 };
 
 /** Talking to Ohm, as a terminal: your name on top, the conversation, then `$` and your message. */
-export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props) {
+export function Chat({ items, disabled, wait, name, onSay, onReport, onRename }: Props) {
   const [text, setText] = useState("");
 
   return (
@@ -74,7 +75,7 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
         className="flex items-center gap-2 px-3 pb-2 pt-1"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!text.trim()) return;
+          if (!text.trim() || wait) return; // keep the text: it can go out when the wait is over
           onSay(text.trim());
           setText("");
         }}
@@ -95,12 +96,12 @@ export function Chat({ items, disabled, name, onSay, onReport, onRename }: Props
         />
         <button
           type="submit"
-          disabled={disabled || !text.trim()}
+          disabled={disabled || !text.trim() || wait > 0}
           // Keeps the focus (and the phone's keyboard) in the text box when you tap [send].
           onPointerDown={(e) => e.preventDefault()}
           className="term-btn"
         >
-          [send]
+          {wait ? `[wait ${wait}s]` : "[send]"}
         </button>
       </form>
     </section>

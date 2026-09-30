@@ -46,7 +46,8 @@ const place = (x: number, y: number, w: number, h: number) => ({
   height: `${(h / H) * 100}%`,
 });
 
-export type DeviceButton = { label: string; onClick: () => void; disabled: boolean };
+/** `glow` points at the one button that helps right now (reboot, while Ohm is off). */
+export type DeviceButton = { label: string; onClick: () => void; disabled: boolean; glow?: boolean };
 
 export function Device({ screen, buttons }: { screen: ReactNode; buttons: DeviceButton[] }) {
   return (
@@ -67,9 +68,10 @@ export function Device({ screen, buttons }: { screen: ReactNode; buttons: Device
           style={place(10.5 + i * 9, 36, 9, 11)}
         >
           {/* Sinks one pixel the moment it's pressed, like a real button. */}
-          <PixelArt art={BUTTON} className="w-[78%] group-active:translate-y-[12.5%]" />
-          <span className="font-pixel text-[clamp(8px,3.2cqw,12px)] font-bold leading-none text-ink">{b.label}</span>
-        </button>
+          <PixelArt art={BUTTON} className={`w-[78%] group-active:translate-y-[12.5%] ${b.glow ? "drop-shadow-[0_0_5px_#fff]" : ""}`} />
+          <span className={`font-pixel text-[clamp(10px,3.2cqw,12px)] font-bold leading-none text-ink ${b.glow ? "motion-safe:animate-blink" : ""}`}>
+            {b.label}
+          </span>        </button>
       ))}
     </div>
   );

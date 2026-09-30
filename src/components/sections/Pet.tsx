@@ -1,6 +1,6 @@
-import type { ChatItem } from "@/hooks/useOhm";
+import type { ChatItem, Poke } from "@/hooks/useOhm";
 import { faceOf, skyOf } from "@/lib/ohmState";
-import type { FeedEvent, MilestoneId, Pet as PetState, Weather } from "@/lib/protocol";
+import type { MilestoneId, Pet as PetState, Weather } from "@/lib/protocol";
 import { skyLook } from "@/lib/skyLook";
 import { Device, type DeviceButton } from "../pixel/Device";
 import { OhmSprite } from "../pixel/OhmSprite";
@@ -15,15 +15,14 @@ type Props = {
   pet: PetState;
   weather: Weather;
   now: number;
-  feed: FeedEvent[];
+  poke: Poke | null;
   chat: ChatItem[];
   unlocked: MilestoneId[];
   buttons: DeviceButton[];
 };
 
 /** Ohm in its toy, with its speech bubble. Sized by its parent (a size container, see page.tsx). */
-export function Pet({ pet, weather, now, feed, chat, unlocked, buttons }: Props) {
-  const poke = feed.find((e) => e.type === "charge" || e.type === "play");
+export function Pet({ pet, weather, now, poke, chat, unlocked, buttons }: Props) {
   const face = faceOf(pet, weather, now, poke?.at ?? 0);
   const off = face === "off";
   const said = chat.findLast((item) => item.from === "ohm");
@@ -42,12 +41,12 @@ export function Pet({ pet, weather, now, feed, chat, unlocked, buttons }: Props)
             <div className="relative flex min-h-0 flex-1 items-end justify-center overflow-hidden">
               <Sky weather={weather} now={now} />
               {/* Remounts on every charge or play, so Ohm hops when someone pokes it. */}
-              <div key={poke?.id} className="relative h-[92%] motion-safe:animate-hop">
+              <div key={poke?.key} className="relative h-[92%] motion-safe:animate-hop">
                 <OhmSprite face={face} parts={unlocked} className="h-full w-auto" />
               </div>
               {fresh && (
                 <p
-                  key={`zap-${fresh.id}`} // not just the id: the hop above already uses it as a key
+                  key={`zap-${fresh.key}`} // not just the key: the hop above already uses it
                   aria-hidden
                   className={`title-outline absolute top-[6%] hidden font-pixel text-lg font-bold motion-safe:block motion-safe:animate-float ${fresh.type === "charge" ? "[--drop:var(--color-lemon)]" : ""}`}
                 >

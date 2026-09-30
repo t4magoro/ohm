@@ -17,7 +17,7 @@ export const weekday = (at: number) => new Date(at).toLocaleDateString([], { wee
 export const dayAndTime = (at: number) => new Date(at).toLocaleString([], { weekday: "short", hour: "2-digit", minute: "2-digit" });
 /** "29 Sep" */
 export const dayAndMonth = (at: number) => new Date(at).toLocaleDateString([], { day: "numeric", month: "short" });
-/** "14:05" in Bandung, wherever the visitor is: Ohm's clock */
+/** local bandung time, wherever the visitor is: Ohm's clock */
 export const bandungClock = (at: number) =>
   new Date(at).toLocaleTimeString("en-GB", { timeZone: "Asia/Jakarta", hour: "2-digit", minute: "2-digit" });
 /** "29 Sep 2026, 14:00": when something happened, on the admin page */
