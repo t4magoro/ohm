@@ -75,6 +75,15 @@ export const ReportRow = ({ item: r, run, busy }: RowProps<AdminOverview["report
   </Row>
 );
 
+
+export const AnswerRow = ({ item: a, run, busy }: RowProps<AdminOverview["answers"][number]>) => (
+  <Row word={`"${a.text}"`} meta={`given ${a.n}x, ${dateAndTime(a.at)}`}>
+    <button type="button" className={bad} disabled={busy} onClick={() => run("forget", { text: a.text }, `Ohm forgot "${a.text}"`)}>
+      [forget]
+    </button>
+  </Row>
+);
+
 export const BanRow = ({ item: b, run, busy }: RowProps<AdminOverview["bans"][number]>) => (
   <Row word={<code>{b.ipHash}</code>} meta={dateAndTime(b.at)}>
     <button type="button" className={good} disabled={busy} onClick={() => run("unban", { ipHash: b.ipHash }, `Unbanned ${b.ipHash}`)}>

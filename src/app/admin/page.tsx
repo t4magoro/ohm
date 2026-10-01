@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AdminCard, List } from "@/components/admin/AdminCard";
 import { BatteryForm } from "@/components/admin/BatteryForm";
 import { LoginForm } from "@/components/admin/LoginForm";
-import { BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/components/admin/ModerationRows";
+import { AnswerRow,BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/components/admin/ModerationRows";
 import { SearchResults } from "@/components/admin/SearchResults";
 import { CardSkeleton } from "@/components/ui/Skeleton";
 import { adminApi } from "@/lib/adminApi";
@@ -172,6 +172,15 @@ export default function Admin() {
             <List empty="Ohm doesn't know any words yet.">
               {data.words.map((w) => (
                 <WordRow key={w.word} item={w} run={act} busy={busy} />
+              ))}
+            </List>
+          </AdminCard>
+
+          {/* Whole answers Ohm may say back to anyone (ohm-api answers.ts). Forgotten ones can come back if people give them again. */}
+          <AdminCard id="answers" title="Kept answers" count={data.answers.length}>
+            <List empty="None yet. When people answer Ohm, he keeps their answers here.">
+              {data.answers.map((a) => (
+                <AnswerRow key={a.text} item={a} run={act} busy={busy} />
               ))}
             </List>
           </AdminCard>

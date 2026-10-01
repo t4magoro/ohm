@@ -1,4 +1,4 @@
-import { END, NO_THOUGHTS, outcome, q, rows, SCREEN_LABEL, startText } from "@/content/thinking";
+import { END, NO_THOUGHTS, outcome, q, rows, SCREEN_LABEL, START_LABEL, startNote, startText, wordsOf } from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
 import { Dots } from "../ui/Dots";
 import { PixelArt } from "./PixelArt";
@@ -9,18 +9,17 @@ const LABEL = "font-pixel text-[clamp(10px,3.2cqw,12px)]";
 /** One page of Ohm's thinking: page 0 is where he started, page i is how he got word i + 1. */
 function Page({ why, page }: { why: Why; page: number }) {
   if (page === 0) {
-    const { word, from, situation, lift } = why.seed;
+    const { from, situation, lift } = why.seed;
     return (
       <>
-        <p className={`${LABEL} opacity-70`}>START</p>
-        <p className="text-[1.4em]">{q(word)}</p>
-        {from === "situation" ? (
+        <p className={`${LABEL} opacity-70`}>{START_LABEL[from]}</p>
+        <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>        {from === "situation" ? (
           <p className="flex items-center gap-[4%]">
             <PixelArt art={SITUATION_ICONS[situation!]} className="h-[0.8em] w-auto" />
             {lift!.toFixed(1)}× more in {situation}
           </p>
         ) : (
-          <p>{from === "topic" ? "your rarest word" : "a random word"}</p>
+           <p>{startNote(why)}</p>
         )}
       </>
     );
