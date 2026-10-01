@@ -3,7 +3,7 @@ import type { Vitals } from "@/lib/protocol";
 import { PixelArt } from "../pixel/PixelArt";
 import { SITUATION_ICONS } from "../pixel/sprites/situations";
 
-/** The words Ohm links to a situation (rain, night, charging…), strongest first. The API only sends words 2+ visitors used. */
+/** The words Ohm links to a situation (rain, night, charging…), strongest first. Each link rests on 2+ browsers using the word in that situation. */
 export function Understands({ links }: { links: Vitals["links"] }) {
   return (
     <section className="card space-y-2 p-3">
