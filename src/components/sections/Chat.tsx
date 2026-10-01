@@ -26,7 +26,7 @@ type Props = {
 export function Chat({ items, disabled, wait, name, votes, onSay, onRate, onReport, onRename }: Props) {
   const [text, setText] = useState("");
 
-  // Ohm asks back under its reply to your latest message. Your messages are never stored,
+  // Ohm asks back under its reply to your latest message. The history only has Ohm's lines,
   // so replies from before this visit (the history) never get the question.
   const lastYou = items.findLastIndex((i) => i.from === "you");
   const reply = lastYou < 0 ? undefined : items.slice(lastYou).find((i) => i.from === "ohm" && i.to === name);

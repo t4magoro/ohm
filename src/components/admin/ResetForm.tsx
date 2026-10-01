@@ -13,7 +13,7 @@ export function ResetForm({ busy, onReset }: { busy: boolean; onReset: () => Pro
       <div className="grid gap-x-6 gap-y-1 sm:grid-cols-2">
         <p>
           <span className="text-danger">forgets:</span> every word, the approval queue, word patterns, situations and
-          links, the four skills
+          links, kept answers, the five skills
         </p>
         <p>
           <span className="text-mint">keeps:</span> the blocklist, bans, reports, Ohm&apos;s past lines, the feed, the

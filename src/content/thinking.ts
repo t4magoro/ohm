@@ -6,9 +6,12 @@ import type { Situation, Why, WhyStep } from "@/lib/protocol";
 export const END = "</s>";
 export const q = (w: string) => `"${w}"`;
 
-/** The words Ohm thought, without the "zzz…" or "beep" the line's text can add. */
-export const wordsOf = (why: Why) => [why.seed.word, ...why.steps.map((s) => s.word).filter((w) => w !== END)];
+/** The words Ohm thought, without the "zzz…" or "beep" the line's text can add. A quote is a whole answer people gave. */
+export const wordsOf = (why: Why) =>
+  why.quote ? why.quote.words : [why.seed.word, ...why.steps.map((s) => s.word).filter((w) => w !== END)];
 
+/** The title of page 0, in the (!) sheet. */
+export const firstTitle = (why: Why) => (why.quote ? "the answer" : "the first word");
 /** Which rung made the word: the one he followed, else babble. */
 export const rungOf = (s: WhyStep) => s.tried.find((t) => t.followed)?.rung ?? "babble";
 
@@ -29,10 +32,18 @@ const NOW: Record<Situation, string> = {
 };
 
 export function startText(why: Why) {
-  const { word, from, situation, lift } = why.seed;
+const { word, from, situation, lift, cue } = why.seed;
   if (from === "topic") return `He started with ${q(word)}: the rarest word he knew in the message.`;
   if (from === "situation")
     return `Right now ${NOW[situation!]}. People say ${q(word)} ${lift!.toFixed(1)} times more when it's like this, so it was on his mind, and he started there.`;
+  if (from === "answer") {
+    const learned = `When Ohm says ${q(cue!)}, people answer ${q(word)} ${lift!.toFixed(1)} times more than usual. You said ${q(cue!)}`;
+    return why.quote
+      ? `${learned}, so he answered like them, with a whole answer people gave ${why.quote.times} times.`
+      : `${learned}, so he started his answer there.`;
+  }
+  if (from === "ask")
+    return `He had no answer ready, and you didn't ask him anything, so he asked you something back, like a curious kid (he does that 1 time in 4). He started with ${q(word)}, a question word people use with him.`;
   return `He didn't know any of the words, so he started with a random word he knows: ${q(word)}.`;
 }
 
@@ -81,6 +92,12 @@ export function rows(why: Why, i: number): Row[] {
 export const outcome = (r: Row) => (r.rung === "babble" ? (r.yes ? "stop" : "go on") : r.chance === 0 ? "none" : r.yes ? "yes" : "no");
 
 export const SCREEN_LABEL = { pair: "2 WORDS", word: "1 WORD", babble: "BABBLE" };
+/** Page 0 on Ohm's screen: the label on top, and the short reason under the word. */
+export const START_LABEL = { topic: "START", situation: "START", random: "START", answer: "ANSWER", ask: "ASK BACK" };
+export function startNote({ seed, quote }: Why) {
+  if (seed.from === "answer") return `to ${q(seed.cue!)}${quote ? `, said ${quote.times}×` : ""}`;
+  return seed.from === "ask" ? "asking you back" : seed.from === "topic" ? "your rarest word" : "a random word";
+}
 /** On Ohm's screen when the line has no `why`: it came with the page, or he was sulking. */
 export const NO_THOUGHTS = "say something and watch me think";
 
@@ -92,4 +109,6 @@ export const LEGEND =
   "He learns from anyone, like a toddler, but what 2 people said counts 3 times as much as what 1 person said, and " +
   "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of "+
   "people said the same thing there, unsure when everyone said something different. Then he rolls the dice, " +
-  "so he doesn't say the same thing every time.";
+  "so he doesn't say the same thing every time. And when you say something people usually answer the same way, " +
+  "he answers like them.";
+  ;

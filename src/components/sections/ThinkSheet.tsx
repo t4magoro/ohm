@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
-import { END, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
+import { firstTitle,END, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
@@ -12,7 +12,8 @@ type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void;
 function Ladder({ line, page }: { line: ChatItem; page: number }) {
   const why = line.why!;
   const list = page === 0 ? [] : rows(why, page - 1);
-  const word = page === 0 ? why.seed.word : why.steps[page - 1].word;
+  const word = page === 0 ? wordsOf(why).join(" ") : why.steps[page - 1].word; // a quote is said whole
+  const lit = why.quote ? why.quote.words.indexOf(why.seed.word) : page; // in a quote, the answer word
   const enter = "motion-safe:animate-rise motion-reduce:animate-fade [animation-fill-mode:both]";
   const delay = (i: number) => ({ animationDelay: `${i * 60}ms` });
 
@@ -22,7 +23,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
         {wordsOf(why).map((w, i) => (
           <Fragment key={i}>
             {i > 0 && " "}
-            <span className={i === page ? "bg-text text-screen" : undefined}>{w}</span>
+            <span className={i === lit ? "bg-text text-screen" : undefined}>{w}</span>
           </Fragment>
         ))}
         <span className="text-dim"> @{line.to}</span>
@@ -31,7 +32,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
         {page === 0 && (
           <li className={`relative pb-3 pl-5 ${enter}`}>
             <span className="absolute -left-[7px] top-1.5 size-3 bg-lemon" />
-            <p className="font-pixel text-[10px] text-lemon">the first word</p>
+            <p className="font-pixel text-[10px] text-lemon">{firstTitle(why)}</p>
             <p className="leading-snug">{startText(why)}</p>
           </li>
         )}
@@ -94,7 +95,7 @@ export function ThinkSheet({ line, page, open, onClose, className = "" }: Props)
       className={`sheet term z-20 flex min-h-0 flex-col outline-none ${className}`}
     >
       <h2 className="term-bar">
-        <span>{word === null ? "the first word" : word === END ? "the end" : `word ${page + 1}`}</span>
+        <span>{word === null ? firstTitle(line.why!) : word === END ? "the end" : `word ${page + 1}`}</span>
         <button type="button" className="term-btn absolute right-1.5 bg-screen" onClick={onClose} aria-label="Close">
           [x]
         </button>

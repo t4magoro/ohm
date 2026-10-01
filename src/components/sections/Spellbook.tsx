@@ -4,7 +4,7 @@ import { StatBar } from "../ui/StatBar";
 
 const LANGS = Object.keys(LANG_NAMES) as (keyof typeof LANG_NAMES)[];
 
-/** What Ohm knows: its words, and four skills measured on every message. No combined score: they measure different things. */
+/** What Ohm knows: its words, and five skills measured on every message. No combined score: they measure different things. */
 export function Spellbook({ brain }: { brain: Brain }) {
   return (
     <section className="card space-y-2 p-3">
