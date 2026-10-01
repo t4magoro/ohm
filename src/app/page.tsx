@@ -174,14 +174,15 @@ export default function Home() {
       </div>
 
       <TabBar tab={tab} onTab={openTab} dots={dots} className="col-start-1 row-start-4 group-has-[input:focus]/page:hidden lg:hidden" />
-      {/* (!) while Ohm thinks: over the console on phones, over the middle column on desktop. */}
+      {/* (!) while Ohm thinks: over the console on phones, over the middle column on desktop. On phones it spans
+          the tab bar's auto row, so contain:size stops its text from growing that row and squeezing Ohm. */}
       {think.shown?.why && (
         <ThinkSheet
           line={think.shown}
           page={think.page}
           open={think.info}
           onClose={think.closeInfo}
-          className="col-start-1 row-span-2 row-start-3 max-lg:border-x-0 max-lg:border-b-0 max-lg:pb-[env(safe-area-inset-bottom)] max-lg:shadow-none max-lg:group-has-[input:focus]/page:hidden lg:col-start-2 lg:row-span-1 lg:row-start-1 lg:max-h-[80%] lg:self-start"
+          className="col-start-1 row-span-2 row-start-3 max-lg:border-x-0 max-lg:[contain:size] max-lg:border-b-0 max-lg:pb-[env(safe-area-inset-bottom)] max-lg:shadow-none max-lg:group-has-[input:focus]/page:hidden lg:col-start-2 lg:row-span-1 lg:row-start-1 lg:max-h-[80%] lg:self-start"
         />
       )}
       {ohm.away && <AwayBanner away={ohm.away} onDismiss={ohm.dismissAway} />}
