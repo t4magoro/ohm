@@ -46,7 +46,7 @@ export function rows(why: Why, i: number): Row[] {
   const out: Row[] = s.tried.map(({ rung, chance, followed }) => {
     const look = rung === "word" ? q(p1) : p2 ? q(`${p2} ${p1}`) : `${q(p1)} at the start of a sentence`;
     const title = rung === "word" ? `his last word ${look}` : p2 ? `his last 2 words ${look}` : `sentences that start with ${q(p1)}`;
-    if (chance === 0) return { rung, title, chance, yes: false, text: `Nobody has taught him what comes after ${look} yet. It takes 2 different people.` };
+    if (chance === 0) return { rung, title, chance, yes: false, text: `Nobody has taught him what comes after ${look} yet.` };
     let text = `He's ${sure(chance)} about what comes next (${odds(chance).label}). He rolled the dice: ${followed ? "yes!" : "no."}`;
     if (followed) {
       const share = s.share!;
@@ -54,7 +54,7 @@ export function rows(why: Why, i: number): Row[] {
       else
         text +=
           share === 1
-            ? ` Only ${q(s.word)} was said there by 2 or more people, so he said it.`
+            ? ` ${q(s.word)} is the only thing people said there, so he said it.`
             : ` He picked from what people said there: ${q(s.word)} comes up ${odds(share).label} times, and it came up.`;
     }
     return { rung, title, chance, yes: followed, text };
@@ -89,6 +89,7 @@ export const LEGEND =
   "1. Look at his last 2 words and copy what people said next. " +
   "2. If that doesn't work out, look at just his last word. " +
   "3. If that doesn't work either, babble: say any word he knows, or stop. " +
-  "He only copies what at least 2 different people said. The dots show how sure he is: very sure when lots of " +
+  "He learns from anyone, like a toddler, but what 2 people said counts 3 times as much as what 1 person said, and " +
+  "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of "+
   "people said the same thing there, unsure when everyone said something different. Then he rolls the dice, " +
   "so he doesn't say the same thing every time.";

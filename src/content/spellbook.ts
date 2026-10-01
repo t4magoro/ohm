@@ -11,4 +11,4 @@ export const SKILLS = [
 ] as const;
 
 export const LEARNING =
-  "Ohm learns from the very first message. Where it has no evidence it babbles (a reply of pure babble ends with “beep”); where it has, it speaks in sentences. It only repeats a word pattern once people on two different internet connections have typed it, but friends on one Wi-Fi can each teach it what a word goes with (rain, night…). The skills are measured before Ohm learns: words and context on every message, sentences on every word Ohm says.";
+  "Ohm learns from the very first message. Where it has no evidence it babbles (a reply of pure babble ends with “beep”); where it has, it speaks in sentences. It learns sentences from anyone, like a toddler, but trusts what two people said three times as much as what one person said, and repeating something doesn't make it count more. Friends on one Wi-Fi count as one person for sentences, but can each teach it what a word goes with (rain, night…). The skills are measured before Ohm learns: words and context on every message, sentences on every word Ohm says.";

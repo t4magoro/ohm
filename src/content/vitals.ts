@@ -19,4 +19,4 @@ export const SITUATION_LABEL: Record<Situation, string> = {
 export const NO_SKILLS = "No skill readings yet: Ohm writes them down every hour.";
 export const NO_LINKS =
   "Nothing yet. When different people keep using a word in the same situation (rain, night, charging…), it shows up here.";
-export const LIFT_NOTE = "× usual: how much more likely the situation is when someone uses that word.";
+export const LIFT_NOTE = "× usual: how much more likely the situation is when someone uses that word. Ohm only knows what people tell him, so these are as accurate as the chat.";
