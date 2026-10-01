@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import { PixelArt } from "./PixelArt";
-import { BUTTON, EGG_STARS } from "./sprites/device";
+import { BUTTON, EGG_STARS, THINK_BUTTON } from "./sprites/device";
 
 // The toy Ohm lives in: a Tamagotchi-style egg, 48 × 52 pixels.
-// The screen and the three buttons are HTML laid over the drawing, placed in the same pixels.
+// The screen and the four buttons are HTML laid over the drawing, placed in the same pixels.
 const W = 48;
 const H = 52;
 
@@ -46,8 +46,19 @@ const place = (x: number, y: number, w: number, h: number) => ({
   height: `${(h / H) * 100}%`,
 });
 
-/** `glow` points at the one button that helps right now (reboot, while Ohm is off). */
-export type DeviceButton = { label: string; onClick: () => void; disabled: boolean; glow?: boolean };
+/**
+ * `glow` blinks on the one button that helps right now (reboot, while Ohm is off). `lit` is a quiet mint glow:
+ * something new to look at. `mint` is the think button's color; `pressed` marks a button that's switched on.
+ */
+export type DeviceButton = {
+  label: string;
+  onClick: () => void;
+  disabled: boolean;
+  glow?: boolean;
+  lit?: boolean;
+  mint?: boolean;
+  pressed?: boolean;
+};
 
 export function Device({ screen, buttons }: { screen: ReactNode; buttons: DeviceButton[] }) {
   return (
@@ -60,18 +71,23 @@ export function Device({ screen, buttons }: { screen: ReactNode; buttons: Device
       </div>
       {buttons.map((b, i) => (
         <button
-          key={b.label}
+          key={i} // by place, not label: the labels change while Ohm shows his thinking
           type="button"
           onClick={b.onClick}
           disabled={b.disabled}
+          aria-pressed={b.pressed}
           className="group absolute flex flex-col items-center gap-1 disabled:opacity-35"
-          style={place(10.5 + i * 9, 36, 9, 11)}
+          style={place(7 + i * 8.5, 36, 8.5, 11)}
         >
           {/* Sinks one pixel the moment it's pressed, like a real button. */}
-          <PixelArt art={BUTTON} className={`w-[78%] group-active:translate-y-[12.5%] ${b.glow ? "drop-shadow-[0_0_5px_#fff]" : ""}`} />
+          <PixelArt
+            art={b.mint ? THINK_BUTTON : BUTTON}
+            className={`w-[82%] group-active:translate-y-[12.5%] ${b.glow ? "drop-shadow-[0_0_5px_#fff]" : b.lit ? "drop-shadow-[0_0_4px_var(--color-mint)]" : ""}`}
+          />
           <span className={`font-pixel text-[clamp(10px,3.2cqw,12px)] font-bold leading-none text-ink ${b.glow ? "motion-safe:animate-blink" : ""}`}>
             {b.label}
-          </span>        </button>
+          </span>
+        </button>
       ))}
     </div>
   );

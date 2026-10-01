@@ -11,17 +11,19 @@ import { Header } from "@/components/sections/Header";
 import { Pet } from "@/components/sections/Pet";
 import { Spellbook } from "@/components/sections/Spellbook";
 import { StatusCard } from "@/components/sections/StatusCard";
+import { ThinkSheet } from "@/components/sections/ThinkSheet";
 import { BootScreen, CardSkeleton, TermSkeleton } from "@/components/ui/Skeleton";
 import { TabBar, type Tab } from "@/components/ui/TabBar";
 import { Toast } from "@/components/ui/Toast";
 import { useOhm } from "@/hooks/useOhm";
 import { askShakePermission, canShake, shakeNeedsPermission, useShake } from "@/hooks/useShake";
+import { useThinking } from "@/hooks/useThinking";
 import { isOff, skyOf } from "@/lib/ohmState";
 import { valueNow } from "@/lib/protocol";
 import { skyLook } from "@/lib/skyLook";
 
 const nothing = () => {};
-const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot"].map((label) => ({ label, onClick: nothing, disabled: true }));
+const LOADING_BUTTONS: DeviceButton[] = ["charge", "play", "reboot", "think"].map((label) => ({ label, onClick: nothing, disabled: true }));
 
 // One set of HTML, two layouts, all in CSS:
 // - Phone (under lg): a game screen that never scrolls. Ohm on top, a console below with one panel at
@@ -37,12 +39,14 @@ const LAYOUT =
   "[--panel:40dvh] [--console-top:calc(var(--panel)+3.5rem+3px+env(safe-area-inset-bottom))] " +
   "grid-rows-[auto_minmax(0,1fr)_var(--panel)_auto] max-lg:has-[input:focus]:grid-rows-[auto_0_minmax(0,1fr)_0] " +
   "lg:grid-cols-[minmax(0,26rem)_minmax(22rem,1fr)_minmax(0,22rem)] lg:grid-rows-1 lg:gap-6 lg:p-6";
-const COLUMN = "contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5";
+// Each column has its own desktop slot, so the (!) sheet can lie over the middle one without pushing them along.
+const COLUMN = "contents lg:row-start-1 lg:flex lg:min-h-0 lg:flex-col lg:gap-5";
 
 /** One panel of the console. On phones only the chosen one shows; on desktop they all do. */
 function Panel({ show, scroll, className = "", children }: { show: boolean; scroll?: boolean | "always"; className?: string; children: ReactNode }) {
   const desktop = scroll === "always" ? "lg:-mr-1.5 lg:min-h-0 lg:pb-1.5 lg:pr-1.5" : "lg:overflow-visible";
-  const scrolls = scroll ? `scroll-quiet overflow-y-auto overscroll-contain ${desktop}` : "";  return (
+  const scrolls = scroll ? `scroll-quiet overflow-y-auto overscroll-contain ${desktop}` : "";
+  return (
     <div className={`col-start-1 row-start-3 min-h-0 px-3 pb-3 pt-4 lg:p-0 ${scrolls} ${show ? "" : "max-lg:hidden"} ${className}`}>
       {children}
     </div>
@@ -57,6 +61,7 @@ export default function Home() {
 
   const off = !ohm.pet || isOff(ohm.pet, ohm.now);
   useShake(() => !off && ohm.play(), !shakeNeedsPermission() || shakeAllowed);
+  const think = useThinking(ohm.chat, off);
 
   // The build pre-renders this page with no connection, so the first screen is always the skeleton.
   const { pet, weather, brain, now } = ohm;
@@ -77,7 +82,7 @@ export default function Home() {
   const dots = {
     status: ready && (off || valueNow(ready.pet.charge, ready.now) < 20) ? ("alert" as const) : undefined,
     chat: tab !== "chat" && newest.chat > Math.max(seen.chat, ohm.loaded.chat) ? ("news" as const) : undefined,
-    feed: tab !== "feed" && newest.feed > Math.max(seen.feed, ohm.loaded.feed) ? ("news" as const) : undefined,  
+    feed: tab !== "feed" && newest.feed > Math.max(seen.feed, ohm.loaded.feed) ? ("news" as const) : undefined,
   };
 
   const connection = ohm.banned ? "banned" : ohm.connected ? `${ohm.online} online` : ready ? "reconnecting..." : "connecting...";
@@ -88,7 +93,7 @@ export default function Home() {
       {/* The phone's console: dark ground under the panels and the tab bar. */}
       <div aria-hidden className="col-start-1 row-span-2 row-start-3 border-t-[3px] border-line bg-screen lg:hidden" />
 
-      <div className={COLUMN}>
+      <div className={`${COLUMN} lg:col-start-1`}>
         <Header connected={ohm.connected && !ohm.banned} connection={connection} />
 
         {/* A size container: Ohm's toy grows to fill whatever room is left, on any screen. */}
@@ -104,11 +109,15 @@ export default function Home() {
               poke={ohm.poke}
               chat={ohm.chat}
               unlocked={ohm.unlocked}
-              buttons={[
-                { label: "charge", onClick: ohm.charge, disabled: off || ohm.resting },
-                { label: "play", onClick: ohm.play, disabled: off || ohm.resting },
-                { label: "reboot", onClick: ohm.reboot, disabled: !off || ohm.resting, glow: off },
-              ]}
+              buttons={
+                think.buttons ?? [
+                  { label: "charge", onClick: ohm.charge, disabled: off || ohm.resting },
+                  { label: "play", onClick: ohm.play, disabled: off || ohm.resting },
+                  { label: "reboot", onClick: ohm.reboot, disabled: !off || ohm.resting, glow: off },
+                  think.button,
+                ]
+              }
+              thinking={think.shown ? { line: think.shown, page: think.page } : undefined}
             />
           ) : (
             <div className="relative w-[min(100cqw,92cqh)]">
@@ -121,7 +130,7 @@ export default function Home() {
         </section>
       </div>
 
-      <div className={COLUMN}>
+      <div className={`${COLUMN} lg:col-start-2`}>
         <Panel show={tab === "status"} scroll className="space-y-3 lg:shrink-0">
           {ready ? <StatusCard {...ready} off={off} /> : <CardSkeleton />}
           {ready && canShake() && (
@@ -154,17 +163,27 @@ export default function Home() {
         </Panel>
       </div>
 
-      <div className={COLUMN}>
+      <div className={`${COLUMN} lg:col-start-3`}>
         <Panel show={tab === "feed"} className="lg:min-h-48 lg:flex-1">
           {ready ? <Feed events={ohm.feed} now={ready.now} /> : <TermSkeleton title="live feed" />}
         </Panel>
-          <Panel show={tab === "book"} scroll="always" className="space-y-4">
+        <Panel show={tab === "book"} scroll="always" className="space-y-4">
           {ready ? <Spellbook brain={ready.brain} /> : <CardSkeleton />}
           <Footer />
         </Panel>
       </div>
 
       <TabBar tab={tab} onTab={openTab} dots={dots} className="col-start-1 row-start-4 group-has-[input:focus]/page:hidden lg:hidden" />
+      {/* (!) while Ohm thinks: over the console on phones, over the middle column on desktop. */}
+      {think.shown?.why && (
+        <ThinkSheet
+          line={think.shown}
+          page={think.page}
+          open={think.info}
+          onClose={think.closeInfo}
+          className="col-start-1 row-span-2 row-start-3 max-lg:border-x-0 max-lg:border-b-0 max-lg:pb-[env(safe-area-inset-bottom)] max-lg:shadow-none max-lg:group-has-[input:focus]/page:hidden lg:col-start-2 lg:row-span-1 lg:row-start-1 lg:max-h-[80%] lg:self-start"
+        />
+      )}
       {ohm.away && <AwayBanner away={ohm.away} onDismiss={ohm.dismissAway} />}
       <Toast toast={ohm.toast} />
     </main>

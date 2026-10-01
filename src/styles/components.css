@@ -49,4 +49,40 @@
   .btn:disabled {
     opacity: 0.4;
   }
+
+  /* A sheet over the console (ThinkSheet.tsx). It enters and leaves the same way, as transitions, so pressing
+     again halfway reverses it. Phones: up from the bottom edge. Desktop: grows from its bottom left, where the
+     toy's buttons are. Reduced motion: a fade. */
+  .sheet {
+    transition:
+      transform 240ms var(--ease-out),
+      opacity 240ms var(--ease-out),
+      visibility 0s;
+  }
+  .sheet:not([data-open]) {
+    transform: translateY(100%);
+    visibility: hidden;
+    transition:
+      transform 200ms var(--ease-out),
+      opacity 200ms var(--ease-out),
+      visibility 0s 200ms;
+  }
+  @media (width >= 64rem) {
+    .sheet {
+      transform-origin: 0% 100%;
+    }
+    .sheet:not([data-open]) {
+      transform: scale(0.96);
+      opacity: 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sheet,
+    .sheet:not([data-open]) {
+      transform: none;
+    }
+    .sheet:not([data-open]) {
+      opacity: 0;
+    }
+  }
 }

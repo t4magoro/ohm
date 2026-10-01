@@ -9,6 +9,17 @@ export const hours = (ms: number) => `${(ms / HOUR).toFixed(1)}h`;
 export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
 export const percent = (v: number) => `${Math.round(v)}%`;
+
+/** A chance as the nearest "n in d" with d up to 10: 0.4 → 2 in 5, 0.18 → about 1 in 6. */
+export function odds(p: number) {
+  let best = { n: 1, d: 2, err: Infinity };
+  for (let d = 2; d <= 10; d++) {
+    const n = Math.min(d - 1, Math.max(1, Math.round(p * d)));
+    const err = Math.abs(n / d - p);
+    if (err < best.err - 1e-9) best = { n, d, err };
+  }
+  return { n: best.n, d: best.d, label: `${best.err > 0.004 ? "about " : ""}${best.n} in ${best.d}` };
+}
 export const whole = (v: number) => Math.round(v).toLocaleString();
 
 /** "Tue" */

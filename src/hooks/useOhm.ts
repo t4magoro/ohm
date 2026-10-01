@@ -13,15 +13,15 @@ import {
   type Pet,
   type ServerMsg,
   type Weather,
+  type Why,
 } from "@/lib/protocol";
 
 const WS_URL = `${(process.env.NEXT_PUBLIC_API_URL ?? "").replace(/^http/, "ws")}/ws`;
 const FEED_SIZE = 30;
 const CHAT_SIZE = 30;
 
-/** One line in the chat box: yours (only you see it) or Ohm's (everyone sees it). */
-export type ChatItem = { key: string; from: "you" | "ohm"; text: string; to?: string; lineId?: number };
-
+/** One line in the chat box: yours (only you see it) or Ohm's (everyone sees it). `why`: only on lines said live. */
+export type ChatItem = { key: string; from: "you" | "ohm"; text: string; to?: string; lineId?: number; why?: Why };
 /** "While you were away": what happened since your last visit. */
 export type Away = Extract<ServerMsg, { t: "away" }>;
 
@@ -37,7 +37,7 @@ function savedVotes(): Record<number, boolean> {
   }
 }
 
-const ohmSaid = (l: Line): ChatItem => ({ key: `ohm-${l.id}`, from: "ohm", text: l.text, to: l.to, lineId: l.id });
+const ohmSaid = (l: Line, why?: Why): ChatItem => ({ key: `ohm-${l.id}`, from: "ohm", text: l.text, to: l.to, lineId: l.id, why });
 
 // localStorage can throw (private mode, blocked storage), so every access is guarded.
 function remembered(key: string, make: () => string): string {
@@ -130,9 +130,9 @@ export function useOhm() {
             setPoke({ key: `e-${e.id}`, type: e.type, at: e.at });
           }
         } else if (msg.t === "lines") {
-          setChat(msg.lines.map(ohmSaid));
+          setChat(msg.lines.map((l) => ohmSaid(l))); // history: never a why
           setLoaded((l) => ({ ...l, chat: msg.lines.at(-1)?.id ?? 0 }));
-        } else if (msg.t === "line") setChat((c) => [...c, ohmSaid(msg.line)].slice(-CHAT_SIZE));
+        } else if (msg.t === "line") setChat((c) => [...c, ohmSaid(msg.line, msg.why)].slice(-CHAT_SIZE));
         else if (msg.t === "unsay") setChat((c) => c.filter((item) => item.lineId !== msg.id));
         else if (msg.t === "notice") setToast({ text: msg.msg, bad: false });
         else if (msg.t === "error") setToast({ text: msg.msg, bad: true });
