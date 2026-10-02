@@ -58,21 +58,22 @@ export function rows(why: Why, i: number): Row[] {
     const look = rung === "word" ? q(p1) : p2 ? q(`${p2} ${p1}`) : `${q(p1)} at the start of a sentence`;
     const title = rung === "word" ? `his last word ${look}` : p2 ? `his last 2 words ${look}` : `sentences that start with ${q(p1)}`;
     if (chance === 0) return { rung, title, chance, yes: false, text: `Nobody has taught him what comes after ${look} yet.` };
-    let text = `He's ${sure(chance)} about what comes next (${odds(chance).label}). He rolled the dice: ${followed ? "yes!" : "no."}`;
+    let text =
+      chance === 1
+        ? `People have said something after ${look}, so he follows them. No dice here: he only babbles after a word nobody continued.`
+        : `He's ${sure(chance)} about what comes next (${odds(chance).label}). He rolled the dice: ${followed ? "yes!" : "no, so he looked at just his last word."}`;
     if (followed) {
       const share = s.share!;
-      if (s.word === END) text += share === 1 ? " People always stopped there, so he stopped too." : ` People stopped there ${odds(share).label} times, and so did he.`;
+      if (s.word === END) text += share === 1 ? " People always stopped there, so he stopped too." : ` He stops there ${odds(share).label} times, and this time he did.`;
       else
         text +=
           share === 1
             ? ` ${q(s.word)} is the only thing people said there, so he said it.`
-            : ` He picked from what people said there: ${q(s.word)} comes up ${odds(share).label} times, and it came up.`;
+            : ` From what people said there, he picks ${q(s.word)} ${odds(share).label} times, and this time he did.`;
     }
     return { rung, title, chance, yes: followed, text };
   });
   if (s.stop !== undefined) {
-    const rolls = s.tried.filter((t) => t.chance > 0).length;
-    const reason = rolls === 0 ? "Nobody taught him anything here" : rolls === 1 ? "The roll said no" : "Both rolls said no";
     const stopped = s.word === END;
     out.push({
       rung: "babble",
@@ -80,7 +81,7 @@ export function rows(why: Why, i: number): Row[] {
       chance: s.stop,
       yes: stopped,
       text:
-        `${reason}, so he babbled: any word he knows, or stop. After a word, people's sentences end ` +
+        `So he babbled: any word he knows, or stop. After a word, people's sentences end ` +
         `${odds(s.stop).label} times, so he rolled the dice for that: ${stopped ? "stop." : "keep going!"} ` +
         (stopped ? "So he stopped talking." : `He picked a random word he knows: ${q(s.word)}.`),
     });
@@ -91,7 +92,9 @@ export function rows(why: Why, i: number): Row[] {
 /** The short answer next to the dots: on Ohm's screen and in the (!) sheet. */
 export const outcome = (r: Row) => (r.rung === "babble" ? (r.yes ? "stop" : "go on") : r.chance === 0 ? "none" : r.yes ? "yes" : "no");
 
-export const SCREEN_LABEL = { pair: "2 WORDS", word: "1 WORD", babble: "BABBLE" };
+const SCREEN_LABEL = { pair: "2 WORDS", word: "1 WORD", babble: "BABBLE" };
+/** The rung's name on Ohm's screen. For the first word, his "last 2 words" are the sentence start and that word. */
+export const screenLabel = (rung: Row["rung"], i: number) => (rung === "pair" && i === 0 ? "START" : SCREEN_LABEL[rung]);
 /** Page 0 on Ohm's screen: the label on top, and the short reason under the word. */
 export const START_LABEL = { topic: "START", situation: "START", random: "START", answer: "ANSWER", ask: "ASK BACK" };
 export function startNote({ seed, quote }: Why) {
@@ -104,9 +107,9 @@ export const NO_THOUGHTS = "say something and watch me think";
 export const LEGEND =
   "Ohm makes a sentence one word at a time. For each word he tries 3 things, in order: " +
   "1. Look at his last 2 words and copy what people said next. " +
-  "2. If that doesn't work out, look at just his last word. " +
-  "3. If that doesn't work either, babble: say any word he knows, or stop. " +
-  "He learns from anyone, like a toddler, but what 2 people said counts 3 times as much as what 1 person said, and " +
+  "2. If that doesn't work out, look at just his last word, and follow what people said after it. " +
+  "3. Only if nobody said anything after it, babble: say any word he knows, or stop. " +
+  "He learns from anyone, like a toddler: what 1 person said gets a quarter of a vote, what 2 people said counts 5 times as much, and " +
   "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of " +
   "people said the same thing there, unsure when everyone said something different. Then he rolls the dice, " +
   "so he doesn't say the same thing every time. And when you say something people usually answer the same way, " +

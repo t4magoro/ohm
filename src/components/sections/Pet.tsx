@@ -88,7 +88,7 @@ export function Pet({ pet, weather, now, poke, chat, unlocked, buttons, thinking
               </Fragment>
             ))
           : bubble}
-        {by && <span className="text-base text-[#5b6180]"> @{by.to}</span>}
+        {by && <span className="text-base text-[#5b6180]"> to @{by.to}</span>}
         <PixelArt art={BUBBLE_TAIL} className="absolute left-4 top-full w-[18px]" />
       </div>
     </div>

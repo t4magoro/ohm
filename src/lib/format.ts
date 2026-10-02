@@ -10,8 +10,9 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" :
 
 export const percent = (v: number) => `${Math.round(v)}%`;
 
-/** A chance as the nearest "n in d" with d up to 10: 0.4 → 2 in 5, 0.18 → about 1 in 6. */
+/** A chance as the nearest "n in d" with d up to 10: 0.4 → 2 in 5, 0.18 → about 1 in 6, 1 → always. */
 export function odds(p: number) {
+  if (p === 1) return { n: 5, d: 5, label: "always" }; // every dot filled
   let best = { n: 1, d: 2, err: Infinity };
   for (let d = 2; d <= 10; d++) {
     const n = Math.min(d - 1, Math.max(1, Math.round(p * d)));

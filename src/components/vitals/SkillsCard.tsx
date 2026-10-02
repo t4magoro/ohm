@@ -10,11 +10,13 @@ import { PALETTE } from "../pixel/palette";
 
 const HOUR = 3_600_000;
 const WEEK = 7 * 24 * HOUR;
-const SKILLS = ["words", "sentences", "context", "expression", "conversation"] as const;
-// Not lemon or pink: those are charge and mood in the chart next door.
-const COLORS: Record<keyof Skills, string> = {
-  words: PALETTE.a,
-  sentences: PALETTE.b,
+const SKILLS = ["words", "guessing", "context", "expression", "conversation"] as const;
+// The chart also shows sentences, the skill guessing replaced in brain v3: its line stops there.
+const SERIES = ["words", "sentences", "guessing", "context", "expression", "conversation"] as const;
+// Not lemon or pink: those are charge and mood in the chart next door. Sentences is grey: it isn't measured any more.
+const COLORS: Record<(typeof SERIES)[number], string> = {  words: PALETTE.a,
+  sentences: PALETTE.z,
+  guessing: PALETTE.b,
   context: PALETTE.o,
   expression: PALETTE.v,
   conversation: PALETTE.w,
@@ -62,12 +64,14 @@ export function SkillsCard({ snapshots, skills, now, ticks }: Props) {
   );
 
   if (view === "chart") {
+    // A skill with no reading this week (sentences, a week after brain v3) leaves the chart.
+    const series = SERIES.map((k) => ({ name: k, color: COLORS[k], values: measured.map((s) => percentOf(s.skills![k])) }));
     return (
       <StepChart
         title={title}
         actions={toggle}
         xs={measured.map((s) => s.at)}
-        series={SKILLS.map((k) => ({ name: k, color: COLORS[k], values: measured.map((s) => percentOf(s.skills![k])) }))}
+        series={series.filter((s) => s.values.some((v) => v !== null))}
         from={now - WEEK}
         to={now}
         step={HOUR}
