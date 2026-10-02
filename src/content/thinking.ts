@@ -32,7 +32,7 @@ const NOW: Record<Situation, string> = {
 };
 
 export function startText(why: Why) {
-const { word, from, situation, lift, cue } = why.seed;
+  const { word, from, situation, lift, cue } = why.seed;
   if (from === "topic") return `He started with ${q(word)}: the rarest word he knew in the message.`;
   if (from === "situation")
     return `Right now ${NOW[situation!]}. People say ${q(word)} ${lift!.toFixed(1)} times more when it's like this, so it was on his mind, and he started there.`;
@@ -107,8 +107,7 @@ export const LEGEND =
   "2. If that doesn't work out, look at just his last word. " +
   "3. If that doesn't work either, babble: say any word he knows, or stop. " +
   "He learns from anyone, like a toddler, but what 2 people said counts 3 times as much as what 1 person said, and " +
-  "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of "+
+  "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of " +
   "people said the same thing there, unsure when everyone said something different. Then he rolls the dice, " +
   "so he doesn't say the same thing every time. And when you say something people usually answer the same way, " +
   "he answers like them.";
-  ;

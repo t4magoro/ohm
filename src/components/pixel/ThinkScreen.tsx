@@ -13,13 +13,14 @@ function Page({ why, page }: { why: Why; page: number }) {
     return (
       <>
         <p className={`${LABEL} opacity-70`}>{START_LABEL[from]}</p>
-        <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>        {from === "situation" ? (
+        <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>
+        {from === "situation" ? (
           <p className="flex items-center gap-[4%]">
             <PixelArt art={SITUATION_ICONS[situation!]} className="h-[0.8em] w-auto" />
             {lift!.toFixed(1)}× more in {situation}
           </p>
         ) : (
-           <p>{startNote(why)}</p>
+          <p>{startNote(why)}</p>
         )}
       </>
     );

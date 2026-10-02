@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { AdminCard, List } from "@/components/admin/AdminCard";
 import { BatteryForm } from "@/components/admin/BatteryForm";
 import { LoginForm } from "@/components/admin/LoginForm";
-import { AnswerRow,BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/components/admin/ModerationRows";
+import { AnswerRow, BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run } from "@/components/admin/ModerationRows";
+import { ResetForm } from "@/components/admin/ResetForm";
 import { SearchResults } from "@/components/admin/SearchResults";
 import { CardSkeleton } from "@/components/ui/Skeleton";
-import { adminApi } from "@/lib/adminApi";
-import { ResetForm } from "@/components/admin/ResetForm";
-import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
+import { adminApi } from "@/lib/adminApi";import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
 
 export default function Admin() {
   const [token, setToken] = useState(""); // only in memory: gone when you close the tab

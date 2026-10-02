@@ -35,7 +35,7 @@ function savedView(): View {
 
 type Props = { snapshots: Snapshot[]; skills: Skills; now: number; ticks: { x: number; label: string }[] };
 
-/** Ohm's Five skills over the last 7 days, as one chart or as four tiles: the visitor picks. */
+/** Ohm's skills over the last 7 days, as one chart or as tiles: the visitor picks. */
 export function SkillsCard({ snapshots, skills, now, ticks }: Props) {
   const [view, setView] = useState(savedView); // only rendered in the browser, after /vitals has loaded
   const measured = snapshots.filter((s) => s.skills !== null);
@@ -65,7 +65,7 @@ export function SkillsCard({ snapshots, skills, now, ticks }: Props) {
     return (
       <StepChart
         title={title}
-        actions={toggle}    
+        actions={toggle}
         xs={measured.map((s) => s.at)}
         series={SKILLS.map((k) => ({ name: k, color: COLORS[k], values: measured.map((s) => percentOf(s.skills![k])) }))}
         from={now - WEEK}
