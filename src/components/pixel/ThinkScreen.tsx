@@ -1,11 +1,15 @@
+import { Fragment } from "react";
 import {
+  bestText,
   END,
+  isBest,
   NO_THOUGHTS,
   outcome,
+  pagesOf,
   q,
-  readFrom,
   rows,
   screenLabel,
+  soFar,
   START,
   START_LABEL,
   startNote,
@@ -16,12 +20,33 @@ import {
 } from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
 import { Dots } from "../ui/Dots";
+import { BestScreen } from "./BestScreen";
 import { PixelArt } from "./PixelArt";
 import { SITUATION_ICONS } from "./sprites/situations";
 
 const LABEL = "font-pixel text-[clamp(10px,3.2cqw,12px)]";
 
-/** One page of Ohm's thinking: page 0 is where he started, page i his step i - 1 (stepsOf: the words after it, then before it). */
+/** The sentence so far, at the top of a step's page: the new word slides in from the side it grew on. */
+function Built({ why, page }: { why: Why; page: number }) {
+  const { words, fresh, left } = soFar(why, page);
+  return (
+    <p className="line-clamp-2 text-[0.8em]">
+      {words.map((w, i) => (
+        <Fragment key={i}>
+          {i > 0 && " "}
+          <span className={i === fresh ? `inline-block bg-mint text-screen ${left ? "motion-safe:animate-in-left" : "motion-safe:animate-in-right"}` : "opacity-70"}>
+            {w}
+          </span>
+        </Fragment>
+      ))}
+    </p>
+  );
+}
+
+/**
+ * One page of Ohm's thinking: page 0 is where he started, page i his step i - 1 (stepsOf: the words after it, then
+ * before it), and best of 5 last.
+ */
 function Page({ why, page }: { why: Why; page: number }) {
   if (page === 0) {
     const { from, situation, lift } = why.seed;
@@ -40,11 +65,12 @@ function Page({ why, page }: { why: Why; page: number }) {
       </>
     );
   }
+  if (isBest(why, page)) return <BestScreen why={why} />;
   const tried = rows(why, page - 1);
   const { word } = stepAt(why, page - 1).s;
   return (
     <>
-      <p className="truncate">{readFrom(why, page - 1)}</p>
+      <Built why={why} page={page} />
       {(["pair", "word", "babble"] as const).map((rung) => {
         const r = tried.find((x) => x.rung === rung);
         const on = !!r && (rung === "babble" || r.yes); // the rung that made the word
@@ -72,7 +98,7 @@ export function ThinkScreen({ why, page }: { why?: Why; page: number }) {
         <span>THINKING</span>
         {why && (
           <span className="tabular-nums">
-            {page + 1}/{stepsOf(why).length + 1}
+            {page + 1}/{pagesOf(why)}
           </span>
         )}
       </p>
@@ -85,6 +111,7 @@ export function ThinkScreen({ why, page }: { why?: Why; page: number }) {
           {stepsOf(why).map((_, i) => (
             <li key={i}>{rows(why, i).map((r) => r.text).join(" ")}</li>
           ))}
+          {why.tries && <li>{bestText(why)}</li>}
         </ol>
       )}
     </div>

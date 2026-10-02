@@ -15,6 +15,9 @@
      carry momentum, so the die gets one small bounce; nothing else does. */
   --animate-grow: grow 320ms steps(6, end) both;
   --animate-throw: throw 480ms steps(8, end) both;
+  /* Ohm's screen while he thinks (ThinkScreen.tsx): each new word slides in from the side the sentence grew on. */
+  --animate-in-left: in-left 240ms steps(4, end) both;
+  --animate-in-right: in-right 240ms steps(4, end) both;
 
   /* The sky behind the page (Backdrop.tsx). Slow and far away, so it never competes with Ohm. */
   --animate-drift: drift 90s linear infinite; /* each cloud sets its own speed */
@@ -66,6 +69,19 @@
     to {
       opacity: 0;
       transform: translateY(-160%);
+    }
+  }
+
+  @keyframes in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-0.8em);
+    }
+  }
+  @keyframes in-right {
+    from {
+      opacity: 0;
+      transform: translateX(0.8em);
     }
   }
 
