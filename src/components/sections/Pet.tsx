@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { wordsOf } from "@/content/thinking";
+import { litOf, wordsOf } from "@/content/thinking";
 import type { ChatItem, Poke } from "@/hooks/useOhm";
 import { faceOf, skyOf } from "@/lib/ohmState";
 import type { MilestoneId, Pet as PetState, Weather } from "@/lib/protocol";
@@ -36,7 +36,7 @@ export function Pet({ pet, weather, now, poke, chat, unlocked, buttons, thinking
   const bubble = off ? "..." : face === "sleep" ? "zzz..." : (said?.text ?? "beep boop?");
   const fresh = poke && now - poke.at < REACTION_MS ? poke : null;
   // While Ohm thinks, the bubble shows the words he thought, with the one on his screen marked.
-  const thought = thinking?.line.why && { line: thinking.line, words: wordsOf(thinking.line.why) };
+  const thought = thinking?.line.why && { line: thinking.line, words: wordsOf(thinking.line.why), lit: litOf(thinking.line.why, thinking.page) };
   const by = thought ? thought.line : talking;
 
   return (
@@ -84,7 +84,7 @@ export function Pet({ pet, weather, now, poke, chat, unlocked, buttons, thinking
           ? thought.words.map((w, i) => (
               <Fragment key={i}>
                 {i > 0 && " "}
-                <span className={i === thinking!.page ? "bg-ink text-white" : undefined}>{w}</span>
+                <span className={i === thought.lit ? "bg-ink text-white" : undefined}>{w}</span>
               </Fragment>
             ))
           : bubble}
