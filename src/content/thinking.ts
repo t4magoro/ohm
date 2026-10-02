@@ -17,7 +17,7 @@ export const rungOf = (s: WhyStep) => s.tried.find((t) => t.followed)?.rung ?? "
 
 const sure = (p: number) => (p >= 0.75 ? "very sure" : p >= 0.5 ? "fairly sure" : p >= 0.25 ? "a little sure" : "not very sure");
 
-const NOW: Record<Situation, string> = {
+export const NOW: Record<Situation, string> = {
   rain: "it's raining",
   hot: "it's hot",
   pagi: "it's morning",

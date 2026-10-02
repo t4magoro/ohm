@@ -8,7 +8,8 @@ import { AnswerRow, BanRow, BlockedRow, PendingRow, ReportRow, WordRow, type Run
 import { ResetForm } from "@/components/admin/ResetForm";
 import { SearchResults } from "@/components/admin/SearchResults";
 import { CardSkeleton } from "@/components/ui/Skeleton";
-import { adminApi } from "@/lib/adminApi";import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
+import { adminApi } from "@/lib/adminApi";
+import type { AdminOverview, AdminSearch, Settings } from "@/lib/protocol";
 
 export default function Admin() {
   const [token, setToken] = useState(""); // only in memory: gone when you close the tab

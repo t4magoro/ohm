@@ -14,7 +14,8 @@ const SKILLS = ["words", "guessing", "context", "expression", "conversation"] as
 // The chart also shows sentences, the skill guessing replaced in brain v3: its line stops there.
 const SERIES = ["words", "sentences", "guessing", "context", "expression", "conversation"] as const;
 // Not lemon or pink: those are charge and mood in the chart next door. Sentences is grey: it isn't measured any more.
-const COLORS: Record<(typeof SERIES)[number], string> = {  words: PALETTE.a,
+const COLORS: Record<(typeof SERIES)[number], string> = {
+  words: PALETTE.a,
   sentences: PALETTE.z,
   guessing: PALETTE.b,
   context: PALETTE.o,

@@ -11,6 +11,10 @@
   --animate-fade: fade 200ms ease; /* the same, with reduced motion: no movement, only a fade */
   --animate-blink: blink 1s steps(1, end) infinite;
   --animate-float: float 900ms steps(6, end) both; /* "ZAP!" rising out of Ohm when someone pokes it */
+    /* "show the maths" (VoteBar.tsx): the bar fills toward the outcome, then the die is thrown onto it. Thrown things
+     carry momentum, so the die gets one small bounce; nothing else does. */
+  --animate-grow: grow 320ms steps(6, end) both;
+  --animate-throw: throw 480ms steps(8, end) both;
 
   /* The sky behind the page (Backdrop.tsx). Slow and far away, so it never competes with Ohm. */
   --animate-drift: drift 90s linear infinite; /* each cloud sets its own speed */
@@ -62,6 +66,31 @@
     to {
       opacity: 0;
       transform: translateY(-160%);
+    }
+  }
+
+  @keyframes grow {
+    from {
+      transform: scaleX(0);
+    }
+  }
+  /* In from the upper left, lands where the roll fell, one small hop, settles. */
+  @keyframes throw {
+    from {
+      opacity: 0;
+      transform: translate(-28px, -14px);
+    }
+    20% {
+      opacity: 1;
+    }
+    60% {
+      transform: translate(0, 0);
+    }
+    78% {
+      transform: translate(0, -3px);
+    }
+    to {
+      transform: translate(0, 0);
     }
   }
   /* From just off the left edge (its own width) to past the right edge. */
