@@ -19,6 +19,38 @@ export const wordsOf = (why: Why) =>
 
 /** Every step, in the order he made them: the words after his start, then the words he grew to the left of it. */
 export const stepsOf = (why: Why) => [...why.steps, ...(why.back ?? [])];
+/** The replay's pages: the start, every step, then best of 5 when he made 5 tries. */
+export const pagesOf = (why: Why) => stepsOf(why).length + 1 + (why.tries ? 1 : 0);
+/** Whether a page is best of 5: the last one, after every step. */
+export const isBest = (why: Why, page: number) => !!why.tries && page === stepsOf(why).length + 1;
+/** How many of a try's word pairs 2+ people typed. */
+export const crowdOf = (t: { crowd: boolean[] }) => t.crowd.filter(Boolean).length;
+
+/** Best of 5's label on Ohm's screen, and in the (!) sheet: the key under the lanes and the try he said. */
+export const bestLabel = (why: Why) => `BEST OF ${why.tries!.length}`;
+export const BEST_KEY = "lemon link = a word pair 2+ people typed · score = those pairs ÷ all its pairs";
+export const SAID = "said";
+
+/** Best of 5, in words: why he said the try he said. */
+export function bestText(why: Why) {
+  const best = why.tries![why.chosen!];
+  return (
+    `He made ${why.tries!.length} tries from the same start, each with its own dice, and said the one whose word pairs ` +
+    `the most people typed: ${crowdOf(best)} of its ${best.crowd.length} pairs were typed by 2 or more people. ` +
+    `(A tie goes to the longer try, then the first.)`
+  );
+}
+
+/** The sentence as it stood after a page, in order, and which word that page added (Ohm's screen shows it). */
+export function soFar(why: Why, page: number) {
+  const steps = stepsOf(why);
+  const forward = why.steps.slice(0, Math.min(page, why.steps.length)).map((s) => s.word);
+  const back = steps.slice(why.steps.length, page).map((s) => s.word);
+  const words = [...back.filter((w) => w !== START).reverse(), why.seed.word, ...forward.filter((w) => w !== END)];
+  const made = page > 0 && page <= steps.length ? steps[page - 1].word : null;
+  const left = page > why.steps.length;
+  return { words, fresh: made === null || made === END || made === START ? -1 : left ? 0 : words.length - 1, left };
+}
 
 /**
  * Step i, and what he read for it. Going right: his last word `near` and the one before it, `far` (null at the
@@ -35,6 +67,7 @@ export function stepAt(why: Why, i: number) {
 /** Which word of wordsOf(why) a page is about: -1 when it's where he stopped, or where a sentence starts. */
 export function litOf(why: Why, page: number) {
   if (why.quote) return why.quote.words.indexOf(why.seed.word); // in a quote, the answer word
+  if (isBest(why, page)) return -1;
   const before = (why.back ?? []).filter((s) => s.word !== START).length;
   if (page === 0) return before;
   const { s, left } = stepAt(why, page - 1);
@@ -45,6 +78,7 @@ export function litOf(why: Why, page: number) {
 /** The (!) sheet's title for a page. */
 export function pageTitle(why: Why, page: number) {
   if (page === 0) return firstTitle(why);
+  if (isBest(why, page)) return "best of 5";
   const { s } = stepAt(why, page - 1);
   return s.word === END ? "the end" : s.word === START ? "the start" : `word ${litOf(why, page) + 1}`;
 }
@@ -52,16 +86,11 @@ export function pageTitle(why: Why, page: number) {
 /** What he did on a page, at the bottom of the (!) sheet. */
 export function madeText(why: Why, page: number) {
   if (page === 0) return `he says ${q(wordsOf(why).join(" "))}`; // a quote is said whole
+  if (isBest(why, page)) return `he says try ${why.chosen! + 1}: ${q(wordsOf(why).join(" "))}`;
   const { s, left } = stepAt(why, page - 1);
   if (s.word === END) return "he stops talking";
   if (s.word === START) return "a sentence starts here, so he stops growing";
   return left ? `he puts ${q(s.word)} in front` : `he says ${q(s.word)}`;
-}
-
-/** What he read, at the top of Ohm's screen: "after "aku suka"", or "before "suka kopi"" when growing left. */
-export function readFrom(why: Why, i: number) {
-  const { left, near, far } = stepAt(why, i);
-  return left ? `before ${q(far === END ? near : `${near} ${far}`)}` : `after ${q(far ? `${far} ${near}` : near)}`;
 }
 
 /** The title of page 0, in the (!) sheet. */
@@ -175,7 +204,8 @@ export const LEGEND =
   "2. If that doesn't work out, look at just his last word, and follow what people said after it. " +
   "3. Only if nobody said anything after it, babble: say any word he knows, or stop. " +
   "Then, if he started from your word, his situation or a random word, he does the same to the left: words before " +
-  "his first one, until a sentence starts. " +
+  "his first one, until a sentence starts. He makes 5 tries like that and says the one whose word pairs the most " +
+  "people typed. " +
   "He learns from anyone, like a toddler: what 1 person said gets a quarter of a vote, what 2 people said counts 5 times as much, and " +
   "saying something again doesn't make it count more (people on one Wi-Fi count as one). The dots show how sure he is: very sure when lots of " +
   "people said the same thing there, unsure when everyone said something different. Then he rolls the dice, " +

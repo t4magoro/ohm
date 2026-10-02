@@ -2,10 +2,11 @@
 
 import { Fragment, useEffect, useRef } from "react";
 import { rowMaths, startMaths } from "@/content/maths";
-import { firstTitle, LEGEND, litOf, madeText, outcome, pageTitle, rows, startText, wordsOf } from "@/content/thinking";
+import { firstTitle, isBest, LEGEND, litOf, madeText, outcome, pageTitle, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
+import { BestSheet } from "./BestSheet";
 import { MathsToggle, mathsMs, ThinkMaths, useMaths } from "./ThinkMaths";
 
 type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void; className?: string };
@@ -13,7 +14,8 @@ type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void;
 /** The ladder for one word: what Ohm tried, in order, the rail lit where it worked. Rows come in one by one. */
 function Ladder({ line, page }: { line: ChatItem; page: number }) {
   const why = line.why!;
-  const list = page === 0 ? [] : rows(why, page - 1);
+  const best = isBest(why, page);
+  const list = page === 0 || best ? [] : rows(why, page - 1);
   const lit = litOf(why, page);
   const enter = "motion-safe:animate-rise motion-reduce:animate-fade [animation-fill-mode:both]";
   const delay = (i: number) => ({ animationDelay: `${i * 60}ms` });
@@ -43,6 +45,12 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
             <p className="font-pixel text-[10px] text-lemon">{firstTitle(why)}</p>
             <p className="leading-snug">{startText(why)}</p>
             {start && <ThinkMaths maths={start} delay={60} explain />}
+          </li>
+          )}
+        {best && (
+          <li className={`relative pb-3 pl-5 ${enter}`}>
+            <span className="absolute -left-[7px] top-1.5 size-3 bg-lemon" />
+            <BestSheet why={why} />
           </li>
         )}
         {list.map((r, i) => (
