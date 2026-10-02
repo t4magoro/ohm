@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useRef } from "react";
 import { rowMaths, startMaths } from "@/content/maths";
-import { END, firstTitle, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
+import { firstTitle, LEGEND, litOf, madeText, outcome, pageTitle, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
@@ -14,8 +14,7 @@ type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void;
 function Ladder({ line, page }: { line: ChatItem; page: number }) {
   const why = line.why!;
   const list = page === 0 ? [] : rows(why, page - 1);
-  const word = page === 0 ? wordsOf(why).join(" ") : why.steps[page - 1].word; // a quote is said whole
-  const lit = why.quote ? why.quote.words.indexOf(why.seed.word) : page; // in a quote, the answer word
+  const lit = litOf(why, page);
   const enter = "motion-safe:animate-rise motion-reduce:animate-fade [animation-fill-mode:both]";
   const delay = (i: number) => ({ animationDelay: `${i * 60}ms` });
   const [maths, toggleMaths] = useMaths();
@@ -64,7 +63,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
           </li>
         ))}
         <li className={`relative pl-5 text-lg ${enter}`} style={delay(list.length)}>
-          <span className="absolute -left-[7px] top-1.5 size-3 bg-text" />→ {word === END ? "he stops talking" : `he says ${q(word)}`}
+          <span className="absolute -left-[7px] top-1.5 size-3 bg-text" />→ {madeText(why, page)}
         </li>
       </ol>
       <details className="group mt-3 text-base leading-snug text-dim">
@@ -84,7 +83,6 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
  */
 export function ThinkSheet({ line, page, open, onClose, className = "" }: Props) {
   const sheet = useRef<HTMLElement>(null);
-  const word = page === 0 ? null : line.why!.steps[page - 1].word;
 
   // Focus moves into the sheet, and Escape closes it, like any dialog.
   useEffect(() => {
@@ -106,7 +104,7 @@ export function ThinkSheet({ line, page, open, onClose, className = "" }: Props)
       className={`sheet term z-20 flex min-h-0 flex-col outline-none ${className}`}
     >
       <h2 className="term-bar">
-        <span>{word === null ? firstTitle(line.why!) : word === END ? "the end" : `word ${page + 1}`}</span>
+        <span>{pageTitle(line.why!, page)}</span>
         <button type="button" className="term-btn absolute right-1.5 bg-screen" onClick={onClose} aria-label="Close">
           [x]
         </button>

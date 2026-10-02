@@ -3,7 +3,7 @@
 // (protocol.ts); this file only does the arithmetic people can check.
 import { odds } from "@/lib/format";
 import { DISCOUNT, SITUATION_CHANCE, type Why, type WhyStep } from "@/lib/protocol";
-import { END, NOW, q, type Row } from "./thinking";
+import { END, NOW, q, START, stepAt, type Row } from "./thinking";
 
 /** What a number means, and so its colour: votes, given to something new, kept, the picked word, a die, the verdict. */
 export type Tone = "votes" | "new" | "kept" | "pick" | "die" | "yes" | "no";
@@ -23,7 +23,7 @@ const num = (x: number) => String(Math.round(x * 100) / 100); // 3.75, 2.25, 1.5
 const pc = (p: number) => `${p < 0.1 && p > 0 ? (p * 100).toFixed(1) : Math.round(p * 100)}%`;
 const die = (x: number) => x.toFixed(2);
 const votes = (count: number) => `${count} ${count === 1 ? "vote" : "votes"}`;
-const nameOf = (word: string) => (word === END ? "the end" : q(word));
+const nameOf = (word: string) => (word === END ? "the end" : word === START ? "the start" : q(word));
 const n = (text: string, tone: Tone): Token => ({ text, tone });
 const t = (text: string): Token => ({ text });
 /** "His die: 0.87 is not below 0.55 follow → something new". */
@@ -36,12 +36,15 @@ const roll = (value: number, against: Token, yes: boolean, said: string): Token[
   n(said, yes ? "yes" : "no"),
 ];
 
-/** One rung he tried: the votes there, what "something new" takes, his die, and the pick. Null when nobody taught him. */
-function rung(tr: WhyStep["tried"][number], s: WhyStep): Maths | null {
+/**
+ * One rung he tried: the votes there, what "something new" takes, his die, and the pick. Null when nobody taught him.
+ * `left`: growing to the left, where the votes are for words before it.
+ */
+function rung(tr: WhyStep["tried"][number], s: WhyStep, left: boolean): Maths | null {
   if (tr.chance === 0) return null;
   const gave = D * tr.options;
   const kept = tr.votes - gave;
-  const words = tr.options === 1 ? "1 next word" : `${tr.options} next words`;
+  const words = left ? `${tr.options} ${tr.options === 1 ? "word" : "words"} before it` : tr.options === 1 ? "1 next word" : `${tr.options} next words`;
   const steps: Token[][] = [
     [n(words, "votes"), t("×"), n("¾", "new"), t("="), n(`${num(gave)} to something new`, "new")],
     [n(votes(tr.votes), "votes"), t("−"), n(num(gave), "new"), t("="), n(`${num(kept)} kept`, "kept")],
@@ -83,49 +86,52 @@ function rung(tr: WhyStep["tried"][number], s: WhyStep): Maths | null {
       caption: `${tr.roll !== undefined ? "second die" : "his die"}: ${name}`,
     });
   return {
-    intro: `${votes(tr.votes)} for ${words}. Each next word gives ¾ of a vote to "something new", a word nobody said here yet.`,
+    intro: `${votes(tr.votes)} for ${words}. Each of them gives ¾ of a vote to "something new", a word nobody said here yet.`,
     steps,
     die: rolled,
     bars,
-    formula: "follow = (votes − ¾ × next words) ÷ votes · pick = (its votes − ¾) ÷ kept",
+    formula: "follow = (votes − ¾ × words) ÷ votes · pick = (its votes − ¾) ÷ kept",
   };
 }
 
-/** Babble: how often people's sentences end, and his die for stopping. */
-function babble(s: WhyStep): Maths | null {
+/** Babble: how often people's sentences end (or start, growing left), and his die for stopping. */
+function babble(s: WhyStep, left: boolean): Maths | null {
   if (s.stop === undefined || s.ends === undefined || s.heard === undefined || s.stopRoll === undefined) return null;
-  const stopped = s.word === END;
+  const stopped = s.word === (left ? START : END);
+  const stop = left ? "start" : "stop";
   const steps: Token[][] =
     s.heard === 0
-      ? [[t("He hasn't heard a sentence end yet →"), n("stop", "no")]]
+      ? [[t("He hasn't heard a sentence end yet →"), n(stop, "no")]]
       : [
-          [n(`${s.ends} sentence ends`, "votes"), t("÷"), n(`${s.heard} words and ends heard`, "votes"), t("="), n(`${pc(s.stop)} stop`, "new")],
-          roll(s.stopRoll, n(`${die(s.stop)} stop`, "new"), stopped, stopped ? "stop" : `go on: ${q(s.word)}`),
+          [n(`${s.ends} sentence ends`, "votes"), t("÷"), n(`${s.heard} words and ends heard`, "votes"), t("="), n(`${pc(s.stop)} ${stop}`, "new")],
+          roll(s.stopRoll, n(`${die(s.stop)} ${stop}`, "new"), stopped, stopped ? stop : `go on: ${q(s.word)}`),
         ];
   return {
-    intro: "Nobody continued his last word, so he babbles: he stops as often as people's sentences end, or says any word he knows.",
+    intro: left
+      ? "Nobody said anything before this word, so he babbles: he starts the sentence as often as people's sentences end, or says any word he knows."
+      : "Nobody continued his last word, so he babbles: he stops as often as people's sentences end, or says any word he knows.",
     steps,
     die: s.heard === 0 ? undefined : 1,
     bars: [
       {
         segs: [
-          { size: s.stop, tone: "stop", label: `stop ${pc(s.stop)}` },
+          { size: s.stop, tone: "stop", label: `${stop} ${pc(s.stop)}` },
           { size: 1 - s.stop, tone: "rest", label: `go on ${pc(1 - s.stop)}` },
         ],
         die: { at: s.stopRoll },
-        caption: `die ${die(s.stopRoll)}: ${stopped ? "stop" : "go on"}`,
+        caption: `die ${die(s.stopRoll)}: ${stopped ? stop : "go on"}`,
       },
     ],
-    formula: "stop = sentence ends ÷ words and ends heard",
+    formula: `${stop} = sentence ends ÷ words and ends heard`,
   };
 }
 
-/** The maths under one row of the ladder for word i + 1. */
+/** The maths under one row of the ladder for step i. */
 export function rowMaths(why: Why, i: number, row: Row): Maths | null {
-  const s = why.steps[i];
-  if (row.rung === "babble") return babble(s);
+  const { s, left } = stepAt(why, i);
+  if (row.rung === "babble") return babble(s, left);
   const tr = s.tried.find((x) => x.rung === row.rung);
-  return tr ? rung(tr, s) : null;
+  return tr ? rung(tr, s, left) : null;
 }
 
 /** Page 0: the counts behind a lift, and the die between his situation and your topic. Null when there's nothing to show. */

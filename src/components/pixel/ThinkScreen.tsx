@@ -1,4 +1,19 @@
-import { END, NO_THOUGHTS, outcome, q, rows, screenLabel, START_LABEL, startNote, startText, wordsOf } from "@/content/thinking";
+import {
+  END,
+  NO_THOUGHTS,
+  outcome,
+  q,
+  readFrom,
+  rows,
+  screenLabel,
+  START,
+  START_LABEL,
+  startNote,
+  startText,
+  stepAt,
+  stepsOf,
+  wordsOf,
+} from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
 import { Dots } from "../ui/Dots";
 import { PixelArt } from "./PixelArt";
@@ -6,7 +21,7 @@ import { SITUATION_ICONS } from "./sprites/situations";
 
 const LABEL = "font-pixel text-[clamp(10px,3.2cqw,12px)]";
 
-/** One page of Ohm's thinking: page 0 is where he started, page i is how he got word i + 1. */
+/** One page of Ohm's thinking: page 0 is where he started, page i his step i - 1 (stepsOf: the words after it, then before it). */
 function Page({ why, page }: { why: Why; page: number }) {
   if (page === 0) {
     const { from, situation, lift } = why.seed;
@@ -25,24 +40,23 @@ function Page({ why, page }: { why: Why; page: number }) {
       </>
     );
   }
-  const words = [why.seed.word, ...why.steps.map((s) => s.word)];
   const tried = rows(why, page - 1);
-  const word = why.steps[page - 1].word;
+  const { word } = stepAt(why, page - 1).s;
   return (
     <>
-      <p className="truncate">after {q(page > 1 ? `${words[page - 2]} ${words[page - 1]}` : words[0])}</p>
+      <p className="truncate">{readFrom(why, page - 1)}</p>
       {(["pair", "word", "babble"] as const).map((rung) => {
         const r = tried.find((x) => x.rung === rung);
         const on = !!r && (rung === "babble" || r.yes); // the rung that made the word
         return (
           <p key={rung} className={`flex items-center gap-[4%] px-[3%] ${on ? "bg-mint text-screen" : r ? "" : "opacity-40"}`}>
-            <span className={`w-[34%] shrink-0 ${LABEL}`}>{screenLabel(rung, page - 1)}</span>
+            <span className={`w-[34%] shrink-0 ${LABEL}`}>{screenLabel(why, rung, page - 1)}</span>
             {r && r.chance > 0 && <Dots p={r.chance} />}
             <span className="ml-auto">{r ? outcome(r) : "·"}</span>
           </p>
         );
       })}
-      <p className="text-[1.2em]">→ {word === END ? "(stop)" : q(word)}</p>
+      <p className="text-[1.2em]">→ {word === END ? "(stop)" : word === START ? "(start)" : q(word)}</p>
     </>
   );
 }
@@ -58,7 +72,7 @@ export function ThinkScreen({ why, page }: { why?: Why; page: number }) {
         <span>THINKING</span>
         {why && (
           <span className="tabular-nums">
-            {page + 1}/{why.steps.length + 1}
+            {page + 1}/{stepsOf(why).length + 1}
           </span>
         )}
       </p>
@@ -68,7 +82,7 @@ export function ThinkScreen({ why, page }: { why?: Why; page: number }) {
       {why && (
         <ol className="sr-only" aria-label="How Ohm thought">
           <li>{startText(why)}</li>
-          {why.steps.map((_, i) => (
+          {stepsOf(why).map((_, i) => (
             <li key={i}>{rows(why, i).map((r) => r.text).join(" ")}</li>
           ))}
         </ol>
