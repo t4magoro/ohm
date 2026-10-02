@@ -50,7 +50,7 @@ export function Chat({ items, disabled, wait, name, votes, onSay, onRate, onRepo
             ) : (
               <Fragment key={item.key}>
                 <li>
-                  <span className="text-mint">ohm&gt;</span> {item.text} <span className="text-dim">@{item.to}</span>{" "}
+                  <span className="text-mint">ohm&gt;</span> {item.text} <span className="text-dim">to @{item.to}</span>{" "}
                   <button
                     type="button"
                     className="term-btn text-base text-dim hover:text-screen focus-visible:text-screen"

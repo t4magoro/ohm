@@ -1,4 +1,4 @@
-import { END, NO_THOUGHTS, outcome, q, rows, SCREEN_LABEL, START_LABEL, startNote, startText, wordsOf } from "@/content/thinking";
+import { END, NO_THOUGHTS, outcome, q, rows, screenLabel, START_LABEL, startNote, startText, wordsOf } from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
 import { Dots } from "../ui/Dots";
 import { PixelArt } from "./PixelArt";
@@ -13,13 +13,14 @@ function Page({ why, page }: { why: Why; page: number }) {
     return (
       <>
         <p className={`${LABEL} opacity-70`}>{START_LABEL[from]}</p>
-        <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>        {from === "situation" ? (
+        <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>
+        {from === "situation" ? (
           <p className="flex items-center gap-[4%]">
             <PixelArt art={SITUATION_ICONS[situation!]} className="h-[0.8em] w-auto" />
             {lift!.toFixed(1)}× more in {situation}
           </p>
         ) : (
-           <p>{startNote(why)}</p>
+          <p>{startNote(why)}</p>
         )}
       </>
     );
@@ -35,7 +36,7 @@ function Page({ why, page }: { why: Why; page: number }) {
         const on = !!r && (rung === "babble" || r.yes); // the rung that made the word
         return (
           <p key={rung} className={`flex items-center gap-[4%] px-[3%] ${on ? "bg-mint text-screen" : r ? "" : "opacity-40"}`}>
-            <span className={`w-[34%] shrink-0 ${LABEL}`}>{SCREEN_LABEL[rung]}</span>
+            <span className={`w-[34%] shrink-0 ${LABEL}`}>{screenLabel(rung, page - 1)}</span>
             {r && r.chance > 0 && <Dots p={r.chance} />}
             <span className="ml-auto">{r ? outcome(r) : "·"}</span>
           </p>

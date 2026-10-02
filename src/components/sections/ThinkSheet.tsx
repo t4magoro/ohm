@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
-import { firstTitle,END, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
+import { END, firstTitle, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
@@ -26,7 +26,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
             <span className={i === lit ? "bg-text text-screen" : undefined}>{w}</span>
           </Fragment>
         ))}
-        <span className="text-dim"> @{line.to}</span>
+        <span className="text-dim"> to @{line.to}</span>
       </p>
       <ol className="ml-2 border-l-2 border-edge">
         {page === 0 && (
