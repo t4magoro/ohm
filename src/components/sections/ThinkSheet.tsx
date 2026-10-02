@@ -1,10 +1,12 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
+import { rowMaths, startMaths } from "@/content/maths";
 import { END, firstTitle, LEGEND, outcome, q, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
+import { MathsToggle, mathsMs, ThinkMaths, useMaths } from "./ThinkMaths";
 
 type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void; className?: string };
 
@@ -16,9 +18,16 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
   const lit = why.quote ? why.quote.words.indexOf(why.seed.word) : page; // in a quote, the answer word
   const enter = "motion-safe:animate-rise motion-reduce:animate-fade [animation-fill-mode:both]";
   const delay = (i: number) => ({ animationDelay: `${i * 60}ms` });
+  const [maths, toggleMaths] = useMaths();
+  const start = maths && page === 0 ? startMaths(why) : null;
+  const sums = list.map((r) => (maths ? rowMaths(why, page - 1, r) : null));
+  // One row's maths after the other's, never all at once. The first die on the page says what a die is.
+  const wait = (i: number) => 60 + sums.slice(0, i).reduce((ms, m) => ms + (m ? mathsMs(m) : 0), 0);
+  const firstDie = sums.findIndex((m) => m?.die !== undefined);
 
   return (
     <>
+      <MathsToggle on={maths} onToggle={toggleMaths} />
       <p className="mb-2">
         {wordsOf(why).map((w, i) => (
           <Fragment key={i}>
@@ -34,6 +43,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
             <span className="absolute -left-[7px] top-1.5 size-3 bg-lemon" />
             <p className="font-pixel text-[10px] text-lemon">{firstTitle(why)}</p>
             <p className="leading-snug">{startText(why)}</p>
+            {start && <ThinkMaths maths={start} delay={60} explain />}
           </li>
         )}
         {list.map((r, i) => (
@@ -50,6 +60,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
               </p>
             )}
             <p className="leading-snug">{r.text}</p>
+            {sums[i] && <ThinkMaths maths={sums[i]} delay={wait(i)} explain={i === firstDie} />}
           </li>
         ))}
         <li className={`relative pl-5 text-lg ${enter}`} style={delay(list.length)}>
