@@ -2,7 +2,7 @@
 
 /** Shown in full on desktop, behind a [readme] button on phones (see Chat.tsx). */
 export const CHAT_NOTE =
-  "# Ohm learns from what you type, and when people use each word (rain, night, charging…), so talk about what's really happening. When you answer Ohm, he learns that too, and can say your whole answer to others. Nobody else sees your message, but Ohm can repeat it, word for word, to everyone, so don't type anything personal.";
+  "# Ohm starts with lines of his own and with word patterns from Tatoeba's example sentences. Everything else he learns from what you type, and from when people use each word (rain, night, charging…), so talk about what's really happening. When you answer Ohm, he learns that too, and can say your whole answer to others. Nobody else sees your message, but Ohm can repeat it, word for word, to everyone, so don't type anything personal.";
 
 export const EMPTY_CHAT = "# no messages yet. say hi below, Ohm answers here.";
 

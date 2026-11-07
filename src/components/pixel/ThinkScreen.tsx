@@ -1,8 +1,13 @@
 import { Fragment } from "react";
 import {
   bestText,
+  CHECK_LABEL,
+  checks,
   END,
   isBest,
+  isVerdict,
+  lineOf,
+  matchAt,
   NO_THOUGHTS,
   outcome,
   pagesOf,
@@ -11,11 +16,12 @@ import {
   screenLabel,
   soFar,
   START,
-  START_LABEL,
+  startLabel,
   startNote,
   startText,
   stepAt,
   stepsOf,
+  weight,
   wordsOf,
 } from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
@@ -48,11 +54,65 @@ function Built({ why, page }: { why: Why; page: number }) {
  * before it), and best of 5 last.
  */
 function Page({ why, page }: { why: Why; page: number }) {
+  // A line's replay: the closest line, then each word you share sliding in as it's counted, the total growing.
+  if (why.retrieved && !isVerdict(why, page)) {
+    const { line, counted, word, total, all } = matchAt(why, page);
+    const row = "flex items-center gap-[4%] px-[3%]";
+    return (
+      <>
+        <p className={`${LABEL} opacity-70`}>{page === 0 ? "CLOSEST LINE" : "SHARED WORD"}</p>
+        <p className="line-clamp-2 text-[0.8em]">
+          {line.prompt.map((w, i) => (
+            <Fragment key={i}>
+              {i > 0 && " "}
+              <span className={w === word?.[0] ? "inline-block bg-mint text-screen motion-safe:animate-in-right" : counted.has(w) ? "" : "opacity-70"}>{w}</span>
+            </Fragment>
+          ))}
+        </p>
+        <p className={row}>
+          <span className={`w-[34%] shrink-0 ${LABEL}`}>{page === 0 ? "LESSON" : "WEIGHT"}</span>
+          <span className="ml-auto">{page === 0 ? checks(why)[0].outcome : `+${weight(word[1])}`}</span>
+        </p>
+        <p className={`${row} bg-mint text-screen`}>
+          <span className={`w-[34%] shrink-0 ${LABEL}`}>SHARED</span>
+          <span className="ml-auto">{weight(total)}</span>
+        </p>
+        <p className="text-[1.2em]">→ {Math.round((total / all) * 100)}% covered</p>
+      </>
+    );
+  }
+  // His verdict: his checks as the rows a word's page has, under the line with the shared words lit.
+  if (why.retrieved) {
+    const line = lineOf(why);
+    return (
+      <>
+        <p className={`${LABEL} opacity-70`}>{startLabel(why)}</p>
+        {line && (
+          <p className="line-clamp-1 text-[0.8em]">
+            {line.prompt.map((w, i) => (
+              <Fragment key={i}>
+                {i > 0 && " "}
+                <span className={line.matched.includes(w) ? "bg-mint text-screen" : "opacity-70"}>{w}</span>
+              </Fragment>
+            ))}
+          </p>
+        )}
+        {checks(why).map((c) => (
+          <p key={c.key} className={`flex items-center gap-[4%] px-[3%] ${c.yes ? "bg-mint text-screen" : ""}`}>
+            <span className={`w-[34%] shrink-0 ${LABEL}`}>{CHECK_LABEL[c.key]}</span>
+            {c.chance > 0 && <Dots p={c.chance} />}
+            <span className="ml-auto">{c.outcome}</span>
+          </p>
+        ))}
+        <p className="line-clamp-2 text-[1.2em]">→ {q(wordsOf(why).join(" "))}</p>
+      </>
+    );
+  }
   if (page === 0) {
     const { from, situation, lift } = why.seed;
     return (
       <>
-        <p className={`${LABEL} opacity-70`}>{START_LABEL[from]}</p>
+        <p className={`${LABEL} opacity-70`}>{startLabel(why)}</p>
         <p className="line-clamp-2 text-[1.4em]">{q(why.quote ? wordsOf(why).join(" ") : why.seed.word)}</p>
         {from === "situation" ? (
           <p className="flex items-center gap-[4%]">

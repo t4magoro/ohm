@@ -3,7 +3,7 @@
 // (protocol.ts); this file only does the arithmetic people can check.
 import { odds } from "@/lib/format";
 import { DISCOUNT, SITUATION_CHANCE, type Why, type WhyStep } from "@/lib/protocol";
-import { END, NOW, q, START, stepAt, type Row } from "./thinking";
+import { END, lineOf, matchAt, NOW, q, START, stepAt, type Row } from "./thinking";
 
 /** What a number means, and so its colour: votes, given to something new, kept, the picked word, a die, the verdict. */
 export type Tone = "votes" | "new" | "kept" | "pick" | "die" | "yes" | "no";
@@ -123,6 +123,53 @@ function babble(s: WhyStep, left: boolean): Maths | null {
       },
     ],
     formula: `${stop} = sentence ends ÷ words and ends heard`,
+  };
+}
+
+/** One page of a line's replay: the word you share, added to the shared weight so far. */
+export function stepMaths(why: Why, page: number): Maths | null {
+  if (page < 1) return null;
+  const { word, total } = matchAt(why, page);
+  const [w, x] = word;
+  return {
+    intro: `How much ${q(w)} weighs: the rarer a word is among his lines, the more it counts.`,
+    steps: [[n(`${num(total - x)} shared so far`, "pick"), t("+"), n(`${q(w)} ${num(x)}`, "pick"), t("="), n(`${num(total)} shared`, "pick")]],
+    bars: [],
+    formula: "shared = the weights of the words you share, added up",
+  };
+}
+
+/** His own lines: how much of your message the closest line covers, as a sum, then the bar he needs half of. */
+export function lineMaths(why: Why): Maths | null {
+  const line = lineOf(why);
+  if (!line?.weights) return null;
+  const { shared, rest, others } = line.weights;
+  const said = !!why.retrieved?.own;
+  const sum = shared.reduce((s, [, x]) => s + x, 0);
+  const all = sum + rest;
+  const share = line.matched.length / line.prompt.length;
+  const steps: Token[][] = [
+    [...shared.flatMap(([w, x], i) => [...(i > 0 ? [t("+")] : []), n(`${q(w)} ${num(x)}`, "pick")]), t("="), n(`${num(sum)} shared`, "pick")],
+    others > 0
+      ? [n(`${num(sum)} shared`, "pick"), t("+"), n(`${num(rest)} from ${others} other ${others === 1 ? "word" : "words"} you said`, "votes"), t("="), n(`${num(all)} in all`, "votes")]
+      : [t("You said nothing else, so"), n(`${num(all)} in all`, "votes")],
+    [n(`${num(sum)} shared`, "pick"), t("÷"), n(`${num(all)} in all`, "votes"), t("="), n(`${pc(line.confidence)} covered`, "pick")],
+    [n(`you said ${line.matched.length} of its ${line.prompt.length} words`, "kept"), t("="), n(pc(share), "kept"), t("more than half, about the same person")],
+    [n(`${pc(line.confidence)} covered`, "pick"), t(said ? "is at least" : "is under"), n("50%", "votes"), t("→"), n(said ? "his line" : "not enough", said ? "yes" : "no")],
+  ];
+  return {
+    intro: 'Each word you share with his line weighs more the rarer it is among his lines, so sharing a rare word counts for more than sharing "aku" or "kamu". Your other words count too, so a long message needs more in common.',
+    steps,
+    bars: [
+      {
+        segs: [
+          { size: sum, tone: "pick", label: `shared ${num(sum)}` },
+          { size: rest, tone: "new", label: rest > 0 ? `not in his line ${num(rest)}` : "" },
+        ],
+        caption: `${pc(line.confidence)} covered, needs 50%: ${said ? "his line" : "not enough"}`,
+      },
+    ],
+    formula: "covered = shared weights ÷ all weights · weight = idf: rarer words weigh more",
   };
 }
 

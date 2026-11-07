@@ -1,8 +1,8 @@
 "use client";
 
 import { Fragment, useEffect, useRef } from "react";
-import { rowMaths, startMaths } from "@/content/maths";
-import { firstTitle, isBest, LEGEND, litOf, madeText, outcome, pageTitle, rows, startText, wordsOf } from "@/content/thinking";
+import { lineMaths, rowMaths, startMaths, stepMaths } from "@/content/maths";
+import { checks, firstTitle, isBest, isVerdict, LEGEND, litOf, madeText, matchRows, outcome, pageTitle, portion, rows, startText, wordsOf } from "@/content/thinking";
 import type { ChatItem } from "@/hooks/useOhm";
 import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
@@ -15,7 +15,7 @@ type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void;
 function Ladder({ line, page }: { line: ChatItem; page: number }) {
   const why = line.why!;
   const best = isBest(why, page);
-  const list = page === 0 || best ? [] : rows(why, page - 1);
+  const list = page === 0 || best || why.retrieved ? [] : rows(why, page - 1);
   const lit = litOf(why, page);
   const enter = "motion-safe:animate-rise motion-reduce:animate-fade [animation-fill-mode:both]";
   const delay = (i: number) => ({ animationDelay: `${i * 60}ms` });
@@ -25,6 +25,10 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
   // One row's maths after the other's, never all at once. The first die on the page says what a die is.
   const wait = (i: number) => 60 + sums.slice(0, i).reduce((ms, m) => ms + (m ? mathsMs(m) : 0), 0);
   const firstDie = sums.findIndex((m) => m?.die !== undefined);
+  // His own line, or admitting: the match's pages, then his checks, in the same rows as a word's, with the sum under them.
+  const verdict = isVerdict(why, page);
+  const checked = why.retrieved ? (verdict ? checks(why) : matchRows(why, page)) : null;
+  const lineSum = checked && maths ? (verdict ? lineMaths(why) : stepMaths(why, page)) : null;
 
   return (
     <>
@@ -39,7 +43,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
         <span className="text-dim"> to @{line.to}</span>
       </p>
       <ol className="ml-2 border-l-2 border-edge">
-        {page === 0 && (
+        {page === 0 && !checked && (
           <li className={`relative pb-3 pl-5 ${enter}`}>
             <span className="absolute -left-[7px] top-1.5 size-3 bg-lemon" />
             <p className="font-pixel text-[10px] text-lemon">{firstTitle(why)}</p>
@@ -47,6 +51,33 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
             {start && <ThinkMaths maths={start} delay={60} explain />}
           </li>
           )}
+        {checked?.map((c, i) => (
+          <li key={c.key} className={`relative pb-3 pl-5 ${enter}`} style={delay(i)}>
+            <span className={`absolute -left-[7px] top-1.5 size-3 ${c.yes ? "bg-mint" : "bg-edge"}`} />
+            <p className="font-pixel text-[10px] text-dim">
+              {i + 1}. {c.title}
+            </p>
+            {c.chance > 0 && (
+              <p className="flex items-center gap-2 text-lemon">
+                <Dots p={c.chance} />
+                {portion(c.chance)} covered
+                <span className={c.yes ? "text-mint" : "text-pink"}>{c.outcome}</span>
+              </p>
+            )}
+            {c.words && (
+              <p>
+                {c.words.map((x, j) => (
+                  <Fragment key={j}>
+                    {j > 0 && " "}
+                    <span className={x.lit ? "bg-text text-screen" : "text-dim"}>{x.w}</span>
+                  </Fragment>
+                ))}
+              </p>
+            )}
+            <p className="leading-snug">{c.text}</p>
+            {c.key === "line" && lineSum && <ThinkMaths maths={lineSum} delay={60} explain={false} />}
+          </li>
+        ))}
         {best && (
           <li className={`relative pb-3 pl-5 ${enter}`}>
             <span className="absolute -left-[7px] top-1.5 size-3 bg-lemon" />
@@ -70,7 +101,7 @@ function Ladder({ line, page }: { line: ChatItem; page: number }) {
             {sums[i] && <ThinkMaths maths={sums[i]} delay={wait(i)} explain={i === firstDie} />}
           </li>
         ))}
-        <li className={`relative pl-5 text-lg ${enter}`} style={delay(list.length)}>
+        <li className={`relative pl-5 text-lg ${enter}`} style={delay(checked?.length ?? list.length)}>
           <span className="absolute -left-[7px] top-1.5 size-3 bg-text" />→ {madeText(why, page)}
         </li>
       </ol>

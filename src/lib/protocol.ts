@@ -45,6 +45,8 @@ export type Counts = (typeof MILESTONES)[number]["counts"];
 export const DISCOUNT = 0.75;
 /** How often Ohm talks about his situation instead of your topic, when he has a word for both (brain.ts). */
 export const SITUATION_CHANCE = 0.3;
+/** How many people must say the same thing after a word before that lesson speaks instead of his lines (retrieve.ts). */
+export const LESSON_PEOPLE = 3;
 
 /**
  * How Ohm chose one word of a reply. He tries the last two words ("pair"), then the last word ("word"). A rung has
@@ -83,7 +85,7 @@ export type Why = {
   on: Situation[];
   seed: {
     word: string;
-    from: "topic" | "situation" | "random" | "answer" | "ask";
+    from: "topic" | "situation" | "random" | "answer" | "ask" | "retrieved";
     situation?: Situation;
     lift?: number;
     cue?: string;
@@ -104,6 +106,24 @@ export type Why = {
   tries?: { words: string[]; crowd: boolean[] }[];
   chosen?: number;
   quote?: { words: string[]; times: number };
+  /**
+   * One of his own lines (seed "retrieved", `own`): the message it answers, `confidence` (how much of what you said it
+   * covers, rare words counting more), `matched` (its words you also said) and `weights`, the sum behind confidence:
+   * shared ÷ (shared + rest), with each shared word's weight and how many other words you said (never which). `admit`:
+   * no line fit, so he said he doesn't know yet, and `closest` is the line that came nearest, if one did.
+   */
+  retrieved?: {
+    prompt: string[];
+    score: number;
+    confidence: number;
+    weights?: { shared: [string, number][]; rest: number; others: number };
+    own?: boolean;
+    admit?: boolean;
+    matched?: string[];
+    closest?: { prompt: string[]; confidence: number; matched: string[]; weights: { shared: [string, number][]; rest: number; others: number } };
+  };
+  /** A lesson: `count` people said the same word after `word`. On a sentence it's why he didn't say a line (`line`: the line it beat). */
+  lesson?: { word: string; count: number; line?: string[] };
 };
 /** Something Ohm said, in reply to a visitor. Visitors' own messages are never shown to others. */
 export type Line = { id: number; at: number; text: string; to: string };
