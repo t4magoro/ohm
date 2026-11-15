@@ -1,5 +1,5 @@
 import { Fragment } from "react";
-import { PRIVACY, WEATHER_SOURCE, WORD_LISTS, WORD_PATTERNS } from "@/content/about";
+import { PRIVACY, REPLY_TEACHER, WEATHER_SOURCE, WORD_LISTS, WORD_PATTERNS } from "@/content/about";
 
 /** Privacy and credits. On phones it sits under the Spellbook; on desktop it's a card of its own. */
 export function Footer() {
@@ -29,7 +29,11 @@ export function Footer() {
         <a href={WORD_PATTERNS.credits} className="underline">
           {WORD_PATTERNS.authors} contributors
         </a>
-        .
+        . His replies: a small network trained on example chats written with{" "}
+        <a href={REPLY_TEACHER.href} className="underline">
+          {REPLY_TEACHER.name}
+        </a>{" "}
+        ({REPLY_TEACHER.license}).
       </p>
     </footer>
   );
