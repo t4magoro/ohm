@@ -2,7 +2,7 @@
 
 /** Shown once, in the banner at the top, when your browser has no visit on record. */
 export const WELCOME =
-  "Hi! I'm Ohm, one robot pet shared by everyone online. Charge me, play with me, and talk to me: I learn to speak from the words you type.";
+  "Hi! I'm Ohm, one robot pet shared by everyone online. Charge me, play with me, and talk to me: I write my own replies, and I learn new words from yours.";
 
 export const PRIVACY =
   "Privacy: no accounts. Your browser keeps a random visitor ID (so Ohm can tell people on one Wi-Fi apart) and your name.";
@@ -18,7 +18,10 @@ export const WORD_LISTS = [
   },
 ];
 
-/** The word patterns his sentences use (ohm-api/src/base.bin): Tatoeba's sentences, crediting every author. */
+/** Where his replies come from (ohm-api/src/model.bin): a small network trained on example chats this model wrote. */
+export const REPLY_TEACHER = { name: "Qwen3-8B", href: "https://huggingface.co/Qwen/Qwen3-8B", license: "Apache 2.0" };
+
+/** The word patterns behind his guessing skill (ohm-api/src/base.bin): Tatoeba's sentences, crediting every author. */
 export const WORD_PATTERNS = {
   name: "Tatoeba",
   href: "https://tatoeba.org",

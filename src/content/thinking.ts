@@ -9,7 +9,9 @@ export const q = (w: string) => `"${w}"`;
 
 /** The words Ohm thought, without the "zzz…" or "beep" the line's text can add. A quote is a whole answer people gave. */
 export const wordsOf = (why: Why) =>
-  why.quote
+  why.written
+    ? why.written.steps.map((s) => s.word).filter((w) => w !== WEND)
+    : why.quote
     ? why.quote.words
     : [
         ...(why.back ?? []).map((s) => s.word).filter((w) => w !== START).reverse(),
@@ -24,7 +26,72 @@ export const stepsOf = (why: Why) => [...why.steps, ...(why.back ?? [])];
  * one page per word you share with it, then his verdict (just the verdict when no line came close).
  */
 export const pagesOf = (why: Why) =>
-  why.retrieved ? (matchSteps(why) > 0 ? matchSteps(why) + 2 : 1) : stepsOf(why).length + 1 + (why.tries ? 1 : 0);
+  why.written
+    ? why.written.steps.length + 2
+    : why.retrieved ? (matchSteps(why) > 0 ? matchSteps(why) + 2 : 1) : stepsOf(why).length + 1 + (why.tries ? 1 : 0);
+
+/**
+ * A reply brain v4 wrote (why.written): page 0 is what he read, then a page per word (his last is "<end>", where he
+ * stopped), then best of 8. The (!) sheet's rows for a page are below (writtenRows).
+ */
+export const WEND = "<end>";
+export const isWrittenBest = (why: Why, page: number) => !!why.written && page === why.written.steps.length + 1;
+const pc = (p: number) => `${Math.round(p * 100)}%`;
+/** His attention on each word you said for one step, as 0 to 3 (how lit it is), and its share and total. */
+export function attentionOf(why: Why, i: number) {
+  const { read, steps } = why.written!;
+  const a = steps[i].attn ?? [];
+  const max = Math.max(...a, 1e-9);
+  const top = a.indexOf(Math.max(...a));
+  return {
+    words: read.map((w, j) => ({ w, level: Math.ceil(((a[j] ?? 0) / max) * 3) })),
+    sum: a.reduce((x, y) => x + y, 0),
+    top: top >= 0 ? { w: read[top], share: a[top] } : null,
+  };
+}
+export type WrittenRow = { key: "read" | "top" | "dice" | "best"; title: string; text: string; words?: { w: string; level: number }[]; top?: { w: string; p: number; said: boolean }[] };
+/** The (!) sheet's rows for a written reply's page: what he read; or his attention, top 5 and dice; or best of 8. */
+export function writtenRows(why: Why, page: number): WrittenRow[] {
+  const w = why.written!;
+  if (page === 0) return [{ key: "read", title: why.lesson ? "a lesson from people" : "what he reads", text: startText(why) }];
+  if (isWrittenBest(why, page)) {
+    const copies = w.candidates.filter((c) => c.why === "copy").length;
+    const all = copies === w.candidates.filter((c) => c.words).length;
+    const set = copies === 0 ? "" : all
+      ? ` All of them were word for word a line of 5 or more words from the chats he learned from, so he took the best of those anyway.`
+      : ` ${copies} of them ${copies === 1 ? "was" : "were"} word for word a line of 5 or more words from the chats he learned from, so he set ${copies === 1 ? "it" : "them"} aside.`;
+    const verdict = w.admit
+      ? `Even the best scored under his guard (${w.theta.toFixed(1)}), so he says he doesn't know yet.`
+      : `He says the one he was surest of: its words were ${pc(typical(w.score!))} likely on average, and he needs at least ${pc(typical(w.theta))}.`;
+    return [{ key: "best", title: `best of ${w.candidates.length}`, text: `He wrote ${w.candidates.length} replies at once, each with its own dice.${set} He scores each by how sure he was of its words, on average. ${verdict}` }];
+  }
+  const s = w.steps[page - 1], att = attentionOf(why, page - 1), said = s.word === WEND ? "stopping" : q(s.word);
+  const inTop = s.top.some(([x]) => x === s.word);
+  return [
+    {
+      key: "read",
+      title: "looking at you",
+      words: att.words,
+      text: att.top
+        ? `While picking this word, ${pc(att.sum)} of his attention was on your words, most on ${q(att.top.w)} (${pc(att.top.share)}). The rest went to his state, his last line to you and his reply so far. Attention shows where he looked, not the whole reason.`
+        : "Only the person Ohm answered sees which of their words he looked at.",
+    },
+    {
+      key: "top",
+      title: "his top 5",
+      top: s.top.map(([x, p]) => ({ w: x === WEND ? "(stop)" : x, p, said: x === s.word })),
+      text: `His network gives every word he may say a chance. These were the likeliest${inTop ? "." : `; ${said} wasn't among them (${pc(s.p)}), but the dice can land on any word in his top 95%.`}`,
+    },
+    {
+      key: "dice",
+      title: "the dice",
+      text: `He keeps the likeliest words until they add up to 95%, rolls the dice among them, and lands on ${said} (${pc(s.p)}).` +
+        (s.lesson > 0.005 ? ` ${pc(s.lesson)} of that chance came from what people taught him.` : ""),
+    },
+  ];
+}
+/** A reply's score (average log2 of its words' chances) as a chance anyone can read: the typical chance of its words. */
+export const typical = (score: number) => 2 ** score;
 /** Whether a page is a line's verdict: its last. */
 export const isVerdict = (why: Why, page: number) => !!why.retrieved && page === pagesOf(why) - 1;
 /** Whether a page is best of 5: the last one, after every step. */
@@ -72,6 +139,7 @@ export function stepAt(why: Why, i: number) {
 
 /** Which word of wordsOf(why) a page is about: -1 when it's where he stopped, or where a sentence starts. */
 export function litOf(why: Why, page: number) {
+  if (why.written) return page === 0 || isWrittenBest(why, page) || why.written.steps[page - 1].word === WEND ? -1 : page - 1;
   if (why.retrieved) return -1; // his own line: said whole, the words he shares with you are lit below
   if (why.quote) return why.quote.words.indexOf(why.seed.word); // in a quote, the answer word
   if (isBest(why, page)) return -1;
@@ -84,6 +152,8 @@ export function litOf(why: Why, page: number) {
 
 /** The (!) sheet's title for a page. */
 export function pageTitle(why: Why, page: number) {
+  if (why.written)
+    return page === 0 || isWrittenBest(why, page) ? writtenRows(why, page)[0].title : why.written.steps[page - 1].word === WEND ? "the end" : `word ${page}`;
   if (why.retrieved && !isVerdict(why, page)) return page === 0 ? "the closest line" : `shared word ${page}`;
   if (why.retrieved || page === 0) return firstTitle(why);
   if (isBest(why, page)) return "best of 5";
@@ -93,6 +163,13 @@ export function pageTitle(why: Why, page: number) {
 
 /** What he did on a page, at the bottom of the (!) sheet. */
 export function madeText(why: Why, page: number) {
+  const w = why.written;
+  if (w) {
+    if (page === 0) return `he writes ${w.candidates.length} replies at once`;
+    if (isWrittenBest(why, page)) return w.admit ? "he says he doesn't know yet" : `he says ${q(wordsOf(why).join(" "))}`;
+    const s = w.steps[page - 1];
+    return s.word === WEND ? "he stops writing" : `he writes ${q(s.word)}`;
+  }
   if (why.retrieved && !isVerdict(why, page)) {
     const { line, word, total } = matchAt(why, page);
     return page === 0 ? `he checks ${q(line.prompt.join(" "))}` : `${q(word[0])} adds ${weight(word[1])}: ${weight(total)} shared so far`;
@@ -136,6 +213,11 @@ const lessonText = ({ word, count, line }: NonNullable<Why["lesson"]>) =>
 
 /** Page 0 in words: his checks for a line, else where he started (after the lesson that made him build a sentence). */
 export function startText(why: Why) {
+  if (why.written) {
+    const reads = `He reads your message, his battery, mood, the weather, the time of day and his last line to you. Then he writes ${why.written.candidates.length} replies at once, one word at a time, each with its own dice.`;
+    const l = why.lesson;
+    return l ? `${l.count} people taught him what comes after ${q(l.word)}, so he mixes their words into his own chances: they weigh ${pc(why.written.lambda)}. ${reads}` : reads;
+  }
   if (why.retrieved) return checks(why).map((c) => c.text).join(" ");
   const text = seedText(why);
   return why.lesson ? `${lessonText(why.lesson)} ${text}` : text;
@@ -306,7 +388,7 @@ export function screenLabel(why: Why, rung: Row["rung"], i: number) {
   return left ? (far === END ? "END" : SCREEN_LABEL.pair) : far === null ? "START" : SCREEN_LABEL.pair;
 }
 /** Page 0 on Ohm's screen: the label on top, and the short reason under the word. */
-export const START_LABEL = { topic: "START", situation: "START", random: "START", answer: "ANSWER", ask: "ASK BACK", retrieved: "MY LINE" };
+export const START_LABEL = { topic: "START", situation: "START", random: "START", answer: "ANSWER", ask: "ASK BACK", retrieved: "MY LINE", written: "YOU SAID" };
 export function startLabel(why: Why) {
   if (why.retrieved) return why.retrieved.own ? "MY LINE" : "NOT YET";
   return why.lesson ? "LESSON" : START_LABEL[why.seed.from];

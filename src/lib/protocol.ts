@@ -85,7 +85,7 @@ export type Why = {
   on: Situation[];
   seed: {
     word: string;
-    from: "topic" | "situation" | "random" | "answer" | "ask" | "retrieved";
+    from: "topic" | "situation" | "random" | "answer" | "ask" | "retrieved" | "written";
     situation?: Situation;
     lift?: number;
     cue?: string;
@@ -124,6 +124,26 @@ export type Why = {
   };
   /** A lesson: `count` people said the same word after `word`. On a sentence it's why he didn't say a line (`line`: the line it beat). */
   lesson?: { word: string; count: number; line?: string[] };
+  /**
+   * Brain v4 (seed "written"): he wrote the reply word by word. Every candidate he wrote, its score (mean log2 p per
+   * word; null for one past 20 words) and why it was kept or set aside (a banned copy counts only when all are copies);
+   * he said the one at `chosen` if its score reached the guard's `theta`, else an admitting line (`admit`). `lambda`: how
+   * much a lesson weighed (0 without one). `read`: your words as he read them. `steps`: for each word of the chosen one,
+   * its chance, the top 5 it was picked from, the share of its chance that came from a lesson, and `attn`, his attention
+   * on each word of `read` while picking it (averaged over his layers and heads; the rest went elsewhere). `die`: where
+   * his roll landed on the chances laid end to end from the likeliest, and `cut`: where they stop (his top 95%).
+   */
+  written?: {
+    score: number | null;
+    theta: number;
+    lambda: number;
+    chosen: number;
+    admit: boolean;
+    state?: string[]; // what he knew of himself: battery, mood, weather, part of the day
+    read: string[]; // your words: only to you (everyone else gets [] and no attn)
+    steps: { word: string; p: number; top: [string, number][]; lesson: number; attn?: number[]; die?: number; cut?: number }[];
+    candidates: { words: string[] | null; score: number | null; why: "ok" | "copy" | "too long" }[];
+  };
 };
 /** Something Ohm said, in reply to a visitor. Visitors' own messages are never shown to others. */
 export type Line = { id: number; at: number; text: string; to: string };

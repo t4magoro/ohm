@@ -8,6 +8,7 @@ import { odds } from "@/lib/format";
 import { Dots } from "../ui/Dots";
 import { BestSheet } from "./BestSheet";
 import { MathsToggle, mathsMs, ThinkMaths, useMaths } from "./ThinkMaths";
+import { WrittenLadder } from "./WrittenSheet";
 
 type Props = { line: ChatItem; page: number; open: boolean; onClose: () => void; className?: string };
 
@@ -150,7 +151,7 @@ export function ThinkSheet({ line, page, open, onClose, className = "" }: Props)
       </h2>
       <div className="scroll-quiet min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-2">
         {/* Re-mounts per page, so each page's rows come in one after another. */}
-        <Ladder key={`${line.key}-${page}`} line={line} page={page} />
+        {line.why!.written ? <WrittenLadder key={`${line.key}-${page}`} line={line} page={page} /> : <Ladder key={`${line.key}-${page}`} line={line} page={page} />}
       </div>
     </section>
   );

@@ -18,6 +18,14 @@
   /* Ohm's screen while he thinks (ThinkScreen.tsx): each new word slides in from the side the sentence grew on. */
   --animate-in-left: in-left 240ms steps(4, end) both;
   --animate-in-right: in-right 240ms steps(4, end) both;
+  /* A written reply's dice (WrittenScreen.tsx): a reel ticks through the words he could say, one word a frame, and
+     lands on his. Then his word slides into the reply (in-right, delayed by the same 900 ms). The steps are set inline
+     (one per word): a var() in here would be read at the root, where it doesn't exist, and void the whole animation. */
+  --animate-reel: reel 900ms both;
+  /* The (!) sheet's dice (WrittenSheet.tsx): the die tumbles in from the left and lands where his roll landed (its
+     own `left`), with one small bounce like the thrown die; his attention bars grow up in pixel steps. */
+  --animate-die-roll: die-roll 900ms steps(9, end) both;
+  --animate-bar-up: bar-up 320ms steps(6, end) both;
 
   /* The sky behind the page (Backdrop.tsx). Slow and far away, so it never competes with Ohm. */
   --animate-drift: drift 90s linear infinite; /* each cloud sets its own speed */
@@ -88,6 +96,29 @@
   @keyframes grow {
     from {
       transform: scaleX(0);
+    }
+  }
+  /* From the reel's first word to where it lands: the element's own transform, set inline. */
+  @keyframes reel {
+    from {
+      transform: translateY(0);
+    }
+  }
+  @keyframes die-roll {
+    from {
+      left: -8px;
+      transform: rotate(-720deg);
+    }
+    80% {
+      transform: rotate(0deg) translateY(0);
+    }
+    90% {
+      transform: translateY(-4px);
+    }
+  }
+  @keyframes bar-up {
+    from {
+      transform: scaleY(0);
     }
   }
   /* In from the upper left, lands where the roll fell, one small hop, settles. */

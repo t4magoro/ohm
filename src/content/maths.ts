@@ -3,7 +3,7 @@
 // (protocol.ts); this file only does the arithmetic people can check.
 import { odds } from "@/lib/format";
 import { DISCOUNT, SITUATION_CHANCE, type Why, type WhyStep } from "@/lib/protocol";
-import { END, lineOf, matchAt, NOW, q, START, stepAt, type Row } from "./thinking";
+import { END, lineOf, matchAt, NOW, q, START, stepAt, typical, type Row } from "./thinking";
 
 /** What a number means, and so its colour: votes, given to something new, kept, the picked word, a die, the verdict. */
 export type Tone = "votes" | "new" | "kept" | "pick" | "die" | "yes" | "no";
@@ -179,6 +179,58 @@ export function rowMaths(why: Why, i: number, row: Row): Maths | null {
   if (row.rung === "babble") return babble(s, left);
   const tr = s.tried.find((x) => x.rung === row.rung);
   return tr ? rung(tr, s, left) : null;
+}
+
+/**
+ * A written reply's maths (brain v4), under the row it explains: on page 0 a lesson's weight, on a word's page the
+ * chances he rolled among, on best of 8 the score against his guard. His die's number isn't sent, so no die is drawn.
+ */
+export function writtenMaths(why: Why, page: number): Maths | null {
+  const w = why.written!;
+  if (page === 0) {
+    if (!why.lesson) return null;
+    const m = Math.min(why.lesson.count, 5);
+    return {
+      intro: "The more people teach him the same thing, the more it weighs, up to 5 people, so a few friends can't take him over.",
+      steps: [[n(`${m} people`, "votes"), t("÷ ("), n(`${m} people`, "votes"), t("+ 3) ="), n(`${pc(w.lambda)} lesson`, "new")]],
+      bars: [{ segs: [{ size: w.lambda, tone: "new", label: `lesson ${pc(w.lambda)}` }, { size: 1 - w.lambda, tone: "fill", label: `his network ${pc(1 - w.lambda)}` }], caption: "how each chance is mixed" }],
+      formula: "chance = (1 − lesson) × his network's chance + lesson × what people said next",
+    };
+  }
+  if (page === w.steps.length + 1) {
+    if (w.score === null) return null;
+    const best = w.candidates[w.chosen];
+    const words = (best.words?.length ?? 0) + 1; // and his stop
+    return {
+      intro: `Each reply's score is how sure he was of its words: the average of log₂ of each word's chance (stopping counts as a word). 0 would mean completely sure.`,
+      steps: [
+        [n(`log₂ of ${words} chances, averaged`, "pick"), t("="), n(w.score.toFixed(2), "pick")],
+        [t("2 to the power of"), n(w.score.toFixed(2), "pick"), t("="), n(`${pc(typical(w.score))} per word`, "pick"), t("(the bar)")],
+        [n(`${pc(typical(w.score))} per word`, "pick"), t(w.admit ? "is under" : "is at least"), n(`${pc(typical(w.theta))} (guard ${w.theta.toFixed(2)})`, "votes"), t("→"), n(w.admit ? "doesn't know yet" : "he says it", w.admit ? "no" : "yes")],
+      ],
+      bars: [],
+      formula: "score = average of log₂(chance) · guard = a score 9 in 10 of his teacher's replies reach",
+    };
+  }
+  const s = w.steps[page - 1], name = nameOf(s.word === "<end>" ? END : s.word), shown = s.top.reduce((a, [, p]) => a + p, 0);
+  const steps: Token[][] = [[n(`${name}`, "pick"), t("had a chance of"), n(pc(s.p), "pick")]];
+  if (s.lesson > 0.005) steps.push([n(pc(s.p), "pick"), t("×"), n(`${pc(s.lesson)} from people`, "new"), t("="), n(`${pc(s.p * s.lesson)} taught`, "new")]);
+  steps.push([n(`his top 5 together: ${pc(shown)}`, "kept"), t("· every other word he may say:"), n(pc(1 - shown), "votes")]); // no "= 100%": rounded shares needn't add up on screen
+  const inTop = s.top.some(([x]) => x === s.word);
+  return {
+    intro: "His network gives every word he may say a score. Softmax turns the scores into chances that add up to 100%. He keeps the likeliest until they reach 95% and rolls the dice among them.",
+    steps,
+    bars: [{
+      segs: [
+        ...s.top.map(([x, p]): Seg => ({ size: p, tone: x === s.word ? "pick" : "kept", label: x === s.word ? `${name} ${pc(p)}` : "" })),
+        ...(inTop ? [] : [{ size: s.p, tone: "pick" as const, label: `${name} ${pc(s.p)}` }]),
+        { size: Math.max(0, 1 - shown - (inTop ? 0 : s.p)), tone: "rest", label: "other words" },
+      ],
+      die: s.die === undefined ? undefined : { at: s.die }, // where his roll really landed (the segments add up to 1)
+      caption: `the dice: ${name}`,
+    }],
+    formula: "chance = softmax(score) · he keeps the top 95% and rolls",
+  };
 }
 
 /** Page 0: the counts behind a lift, and the die between his situation and your topic. Null when there's nothing to show. */

@@ -69,19 +69,17 @@ export function Chat({ items, disabled, wait, name, votes, onSay, onRate, onRepo
       </Log>
 
       {/* Pinned above the prompt, outside the log, so it never scrolls away: you read it right where you type.
-          Desktop has room for the whole note. Phones get a one-line [readme] that opens on tap (a native
-          <details>), so the chat keeps its space. */}
+          A one-line [readme] that opens on tap (a native <details>), on every screen, so the chat keeps its space. */}
       <div className="border-t-2 border-edge px-3 pt-1.5 text-base leading-snug text-dim">
-        <p id="chat-note" className="max-lg:hidden">
-          {CHAT_NOTE}
-        </p>
-        <details className="group lg:hidden">
+        <details className="group">
           <summary className="cursor-pointer list-none text-lemon [&::-webkit-details-marker]:hidden">
             <span className="group-open:hidden">[+] readme</span>
             <span className="hidden group-open:inline">[-] readme</span>
             <span className="text-dim group-open:hidden"> before you type</span>
           </summary>
-          <p className="mt-1">{CHAT_NOTE}</p>
+          <p id="chat-note" className="mt-1">
+            {CHAT_NOTE}
+          </p>
         </details>
       </div>
       <form

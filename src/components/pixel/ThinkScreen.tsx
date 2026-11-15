@@ -23,10 +23,12 @@ import {
   stepsOf,
   weight,
   wordsOf,
+  writtenRows,
 } from "@/content/thinking";
 import type { Why } from "@/lib/protocol";
 import { Dots } from "../ui/Dots";
 import { BestScreen } from "./BestScreen";
+import { WrittenPage } from "./WrittenScreen";
 import { PixelArt } from "./PixelArt";
 import { SITUATION_ICONS } from "./sprites/situations";
 
@@ -54,6 +56,7 @@ function Built({ why, page }: { why: Why; page: number }) {
  * before it), and best of 5 last.
  */
 function Page({ why, page }: { why: Why; page: number }) {
+  if (why.written) return <WrittenPage why={why} page={page} />; // brain v4 wrote it word by word
   // A line's replay: the closest line, then each word you share sliding in as it's counted, the total growing.
   if (why.retrieved && !isVerdict(why, page)) {
     const { line, counted, word, total, all } = matchAt(why, page);
@@ -165,7 +168,14 @@ export function ThinkScreen({ why, page }: { why?: Why; page: number }) {
       <div aria-hidden className="flex min-h-0 flex-1 flex-col justify-center gap-[2%] px-[4%] text-[clamp(14px,5.2cqw,20px)] leading-[1.05]">
         {why ? <Page why={why} page={page} /> : <p className="text-center">{NO_THOUGHTS}</p>}
       </div>
-      {why && (
+      {why?.written && (
+        <ol className="sr-only" aria-label="How Ohm thought">
+          {Array.from({ length: pagesOf(why) }, (_, p) => (
+            <li key={p}>{writtenRows(why, p).map((r) => r.text).join(" ")}</li>
+          ))}
+        </ol>
+      )}
+      {why && !why.written && (
         <ol className="sr-only" aria-label="How Ohm thought">
           <li>{startText(why)}</li>
           {stepsOf(why).map((_, i) => (
