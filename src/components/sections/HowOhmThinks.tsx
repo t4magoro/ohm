@@ -60,7 +60,7 @@ export function HowOhmThinks() {
         </span>
       </Box>
       <div className="ml-6 border-l-2 border-dashed border-lemon py-1 pl-3 text-base text-lemon">
-        if 3 or more people taught what comes next, their words get a bigger slice: more people, bigger, up to 5
+        if 3 or more people taught him a word new to his network, what they said after it gets a bigger slice: more people, bigger, up to 5
       </div>
       <Box k="5 · he checks the 8">long copies of his example chats are set aside, unless all 8 are copies</Box>
       <Down />
