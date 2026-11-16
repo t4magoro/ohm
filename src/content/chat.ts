@@ -2,7 +2,7 @@
 
 /** Shown in full on desktop, behind a [readme] button on phones (see Chat.tsx). */
 export const CHAT_NOTE =
-  "# Ohm writes his replies word by word with a small neural network, trained on example chats written for him. He keeps learning from what you type: once 3 people say the same thing after a word, he mixes it into his replies. He also learns when people use each word (rain, night, charging…), so talk about what's really happening. When you answer Ohm, he learns that too, and can say your whole answer to others. Nobody else sees your message, but what people teach him can come back word for word to everyone, so don't type anything personal.";
+  "# Ohm writes his replies word by word with a small neural network, trained on example chats written for him. He keeps learning from what you type: once 3 people use a word his network doesn't know yet, he mixes what they said after it into his replies. He also learns when people use each word (rain, night, charging…), so talk about what's really happening. When you answer Ohm, he learns that too, and can say your whole answer to others. Nobody else sees your message, but what people teach him can come back word for word to everyone, so don't type anything personal.";
 
 export const EMPTY_CHAT = "# no messages yet. say hi below, Ohm answers here.";
 
